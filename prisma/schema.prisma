@@ -1,0 +1,88 @@
+// Prisma Schema for KEPCO Security Validator
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// 검증 로그 테이블
+model ValidationLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+
+  // 사용자 정보
+  userId    String?  @map("user_id") @db.VarChar(100)
+  userIp    String?  @map("user_ip") @db.VarChar(45)
+  sessionId String?  @map("session_id") @db.VarChar(100)
+  userAgent String?  @map("user_agent") @db.Text
+  department String? @db.VarChar(100)
+
+  // 입력 정보
+  originalPrompt String @map("original_prompt") @db.Text
+  inputType      String @default("text") @map("input_type") @db.VarChar(20)
+  imagePath      String? @map("image_path") @db.VarChar(500)
+  ocrConfidence  Float? @map("ocr_confidence")
+
+  // 검증 결과
+  securityLevel String  @map("security_level") @db.VarChar(20)
+  riskScore     Int     @map("risk_score")
+  isSafe        Boolean @map("is_safe")
+
+  // 위반사항
+  violationCount Int  @default(0) @map("violation_count")
+  violations     Json? // JSON 형식으로 위반사항 저장
+
+  // 필터링 결과
+  sanitizedPrompt String @map("sanitized_prompt") @db.Text
+
+  // 인덱스
+  @@index([timestamp])
+  @@index([securityLevel], map: "idx_security_level")
+  @@index([userId], map: "idx_user_id")
+  @@index([sessionId], map: "idx_session_id")
+  @@map("validation_logs")
+}
+
+// 관리자 계정 테이블
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique @db.VarChar(50)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  email        String?   @db.VarChar(100)
+  role         String    @default("admin") @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLogin    DateTime? @map("last_login")
+
+  @@map("admin_users")
+}
+
+// 통계 캐시 테이블 (성능 최적화)
+model StatisticsCache {
+  id              Int      @id @default(autoincrement())
+  statDate        DateTime @unique @map("stat_date") @db.Date
+  totalValidations Int     @default(0) @map("total_validations")
+  safeCount       Int      @default(0) @map("safe_count")
+  warningCount    Int      @default(0) @map("warning_count")
+  dangerCount     Int      @default(0) @map("danger_count")
+  blockedCount    Int      @default(0) @map("blocked_count")
+  topViolations   Json?    @map("top_violations")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("statistics_cache")
+}
+
+// 시스템 설정 테이블
+model SystemConfig {
+  id    Int    @id @default(autoincrement())
+  key   String @unique @db.VarChar(100)
+  value String @db.Text
+  description String? @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}
