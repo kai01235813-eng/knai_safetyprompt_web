@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { validatePrompt } from '@/lib/validator'
+
+// Railway API URL (환경변수에서 가져오기)
+const RAILWAY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,8 +22,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Python 검증 엔진 호출
-    const result = await validatePrompt(prompt)
+    // Railway FastAPI로 요청
+    const response = await fetch(`${RAILWAY_API_URL}/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Railway API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const result = data.result
 
     // 응답 반환
     return NextResponse.json({
