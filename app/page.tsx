@@ -301,6 +301,51 @@ export default function Home() {
                 {error}
               </div>
             )}
+
+            {/* 보안서약서 (검증 전에만 표시) */}
+            {!result && (
+              <div style={{
+                marginTop: '2rem',
+                padding: '1.5rem',
+                background: '#f0f9ff',
+                border: '2px solid #3b82f6',
+                borderRadius: '12px'
+              }}>
+                <h3 style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  color: '#1e40af',
+                  marginBottom: '1rem',
+                  textAlign: 'center'
+                }}>
+                  📋 보안서약서
+                </h3>
+                <p style={{
+                  fontSize: '0.95rem',
+                  color: '#1e40af',
+                  marginBottom: '1rem',
+                  lineHeight: '1.6',
+                  textAlign: 'center'
+                }}>
+                  생성형AI 서비스를 업무에 활용함에 있어 아래의 보안수칙을 준수하여 안전한 사용 문화 정착에 적극 동참하여 주시기 바랍니다.
+                </p>
+                <ol style={{
+                  fontSize: '0.9rem',
+                  color: '#1e40af',
+                  lineHeight: '1.8',
+                  paddingLeft: '1.5rem',
+                  margin: 0
+                }}>
+                  <li>민감한 정보(非공개 정보, 개인정보 등) 입력을 금지하겠습니다.</li>
+                  <li>업무 보조 목적으로만 활용하고 개인 용도로 사용을 자제하겠습니다.</li>
+                  <li>생성물에 대한 정확성·윤리성·적합성 등 재검증 후 활용하겠습니다.</li>
+                  <li>생성물 활용 시 지적 재산권·저작권 등 법률 침해·위반 여부를 확인하겠습니다.</li>
+                  <li>데이터 오남용 방지를 위해 과도 사용시 시간당 질의 건수 제한에 동의합니다.</li>
+                  <li>사용자입력 데이터의 민감 정보 포함 여부 필터링 및 결과 모니터링에 동의합니다.</li>
+                  <li>사용자입력 데이터 및 서비스 응답 로그의 일정기간 수집·저장에 동의합니다.</li>
+                </ol>
+              </div>
+            )}
           </div>
         </div>
 
