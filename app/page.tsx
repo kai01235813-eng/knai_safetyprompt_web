@@ -111,26 +111,21 @@ export default function Home() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <h1 style={{
-              fontSize: 'clamp(1.25rem, 4vw, 1.75rem)',
+              fontSize: 'clamp(1.1rem, 3.5vw, 1.5rem)',
               fontWeight: 'bold',
               color: '#1e3a8a',
               margin: 0,
               lineHeight: 1.3
             }}>
-              🛡️ AI 프롬프트 보안 검증
+              🛡️ 생성형 AI 프롬프트 보안 검증
             </h1>
             <div style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: 'clamp(0.8rem, 2.5vw, 0.95rem)',
-              color: '#1e3a8a',
-              fontWeight: '600',
-              background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)',
-              padding: '0.35rem 0.85rem',
-              borderRadius: '6px',
-              border: '1px solid #bfdbfe',
-              width: 'fit-content'
+              gap: '0.4rem',
+              fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
+              color: '#3b82f6',
+              fontWeight: '600'
             }}>
               <span style={{ fontSize: '1.1em' }}>⚡</span>
               <span>경남본부 AI혁신팀</span>
