@@ -109,7 +109,7 @@ export default function Home() {
       {/* 헤더 */}
       <header style={{ background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '1.25rem 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center', textAlign: 'center' }}>
             <h1 style={{
               fontSize: 'clamp(1.1rem, 3.5vw, 1.5rem)',
               fontWeight: 'bold',
@@ -122,6 +122,7 @@ export default function Home() {
             <div style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '0.4rem',
               fontSize: 'clamp(0.85rem, 2.5vw, 1rem)',
               color: '#3b82f6',
@@ -139,7 +140,7 @@ export default function Home() {
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
             {/* 탭 */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '2px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '2px solid #e5e7eb', justifyContent: 'center' }}>
               <button
                 onClick={() => setInputType('text')}
                 style={{
@@ -175,7 +176,7 @@ export default function Home() {
             {/* 입력 영역 */}
             {inputType === 'text' ? (
               <div>
-                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151' }}>
+                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151', textAlign: 'center' }}>
                   생성형AI에 전달할 프롬프트를 입력하세요
                 </label>
                 <textarea
@@ -196,7 +197,7 @@ export default function Home() {
               </div>
             ) : (
               <div>
-                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151' }}>
+                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151', textAlign: 'center' }}>
                   이미지 파일을 업로드하세요 (텍스트/이미지)
                 </label>
                 <div style={{
@@ -220,7 +221,7 @@ export default function Home() {
             )}
 
             {/* 버튼 */}
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 onClick={handleValidate}
                 disabled={isValidating}
@@ -294,7 +295,8 @@ export default function Home() {
                 background: '#fee2e2',
                 border: '1px solid #ef4444',
                 borderRadius: '8px',
-                color: '#991b1b'
+                color: '#991b1b',
+                textAlign: 'center'
               }}>
                 {error}
               </div>
@@ -403,7 +405,7 @@ export default function Home() {
             {/* 위반사항 */}
             {result.violations && result.violations.length > 0 && (
               <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', textAlign: 'center' }}>
                   🚨 탐지된 위반사항 ({result.violations.length}건)
                 </h3>
                 <div style={{ display: 'grid', gap: '1rem' }}>
@@ -430,7 +432,7 @@ export default function Home() {
 
             {/* 필터링된 프롬프트 */}
             <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', textAlign: 'center' }}>
                 ✅ 안전하게 필터링된 프롬프트
               </h3>
               <div style={{
@@ -444,26 +446,27 @@ export default function Home() {
               }}>
                 {result.sanitized_prompt}
               </div>
-              <button
-                onClick={() => navigator.clipboard.writeText(result.sanitized_prompt)}
-                style={{
-                  marginTop: '1rem',
-                  padding: '0.5rem 1rem',
-                  background: '#22c55e',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem'
-                }}
-              >
-                📋 복사하기
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                <button
+                  onClick={() => navigator.clipboard.writeText(result.sanitized_prompt)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#22c55e',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  📋 복사하기
+                </button>
+              </div>
             </div>
 
             {/* 권장사항 */}
             {result.recommendation && (
-              <div style={{ background: '#fffbeb', border: '2px solid #fbbf24', borderRadius: '12px', padding: '1.5rem' }}>
+              <div style={{ background: '#fffbeb', border: '2px solid #fbbf24', borderRadius: '12px', padding: '1.5rem', textAlign: 'center' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#92400e' }}>
                   💡 권장사항
                 </h3>
