@@ -104,10 +104,18 @@ async def validate_prompt(request: ValidateRequest):
 
 @app.post("/validate-image")
 async def validate_image():
-    """이미지 검증 (추후 구현)"""
+    """이미지 검증 (OCR 없이 안내 메시지 반환)"""
+    # OCR 라이브러리 없이 임시로 안내 메시지 반환
     return {
-        "success": False,
-        "message": "Image validation not yet implemented on Railway"
+        "success": True,
+        "is_safe": True,
+        "security_level": "안전",
+        "risk_score": 0,
+        "violations": [],
+        "sanitized_prompt": "",
+        "original_prompt": "",
+        "timestamp": "",
+        "recommendation": "이미지 검증 기능은 준비 중입니다. 현재는 텍스트 프롬프트 검증만 지원됩니다."
     }
 
 

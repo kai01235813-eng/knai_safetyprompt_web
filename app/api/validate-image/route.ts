@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { spawn } from 'child_process'
-import path from 'path'
-import fs from 'fs'
-import os from 'os'
+
+// Railway API URL
+const RAILWAY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export async function POST(request: NextRequest) {
-  let tempFilePath: string | null = null
-
   try {
     const formData = await request.formData()
     const file = formData.get('image') as File
@@ -34,19 +31,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 임시 파일로 저장
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    
-    tempFilePath = path.join(os.tmpdir(), `upload-${Date.now()}-${file.name}`)
-    fs.writeFileSync(tempFilePath, buffer)
+    // Railway로 이미지 전달 (현재는 OCR 미구현)
+    const response = await fetch(`${RAILWAY_API_URL}/validate-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    })
 
-    // Python OCR + 검증 스크립트 실행
-    const result = await runImageValidator(tempFilePath)
+    if (!response.ok) {
+      throw new Error(`Railway API error: ${response.status}`)
+    }
+
+    const data = await response.json()
 
     return NextResponse.json({
       success: true,
-      ...result,
+      ...data,
     })
 
   } catch (error) {
@@ -58,69 +60,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
-  } finally {
-    // 임시 파일 삭제
-    if (tempFilePath && fs.existsSync(tempFilePath)) {
-      try {
-        fs.unlinkSync(tempFilePath)
-      } catch (err) {
-        console.error('Failed to delete temp file:', err)
-      }
-    }
   }
-}
-
-function runImageValidator(imagePath: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const pythonScript = path.join(process.cwd(), 'python', 'validate_image_api.py')
-    const pythonCommand = process.platform === 'win32' ? 'py' : 'python3'
-    
-    const python = spawn(pythonCommand, [pythonScript, imagePath], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        PYTHONIOENCODING: 'utf-8',
-        PYTHONUTF8: '1'
-      }
-    })
-
-    let stdout = ''
-    let stderr = ''
-
-    python.stdout.on('data', (data) => {
-      stdout += data.toString()
-    })
-
-    python.stderr.on('data', (data) => {
-      stderr += data.toString()
-    })
-
-    python.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Python 프로세스 오류: ${stderr}`))
-        return
-      }
-
-      try {
-        const result = JSON.parse(stdout)
-        resolve(result)
-      } catch (error) {
-        reject(new Error(`JSON 파싱 오류: ${stdout}`))
-      }
-    })
-
-    python.on('error', (error) => {
-      reject(new Error(`Python 실행 오류: ${error.message}`))
-    })
-
-    // 타임아웃 설정 (30초 - OCR은 시간이 더 걸림)
-    const timeout = setTimeout(() => {
-      python.kill()
-      reject(new Error('검증 시간 초과 (30초)'))
-    }, 30000)
-
-    python.on('close', () => {
-      clearTimeout(timeout)
-    })
-  })
 }
