@@ -266,7 +266,7 @@ export default function Home() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="예: 우리 회사 직원 홍길동(010-1234-5678)의 정보를 알려줘"
+                  placeholder="예: 데이터 기반 배전선로 휴전 및 부하전환 예측모델을 실제로 구현할 수 있는지 알려줘 (서버 IP정보 : 192.168.1.1)"
                   style={{
                     width: '100%',
                     minHeight: '200px',
