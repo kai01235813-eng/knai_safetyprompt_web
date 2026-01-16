@@ -107,11 +107,26 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #eff6ff, #e0e7ff)' }}>
       {/* 헤더 */}
-      <header style={{ background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '1rem 0' }}>
+      <header style={{ background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '1.25rem 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e3a8a' }}>
-            🛡️ 한국전력공사 생성형AI 프롬프트 보안 검증
-          </h1>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <h1 style={{
+              fontSize: '1.75rem',
+              fontWeight: 'bold',
+              color: '#1e3a8a',
+              margin: 0,
+              lineHeight: 1.2
+            }}>
+              🛡️ 생성형 AI 프롬프트 보안 검증
+            </h1>
+            <div style={{
+              fontSize: '0.9rem',
+              color: '#6b7280',
+              fontWeight: '500'
+            }}>
+              한국전력공사 경남본부 AI혁신팀
+            </div>
+          </div>
         </div>
       </header>
 
