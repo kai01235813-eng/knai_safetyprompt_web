@@ -162,8 +162,13 @@ export default function Home() {
                 }}
               >
                 <span>💡 서비스 소개 및 사용 방법</span>
-                <span style={{ fontSize: '1.5rem', transition: 'transform 0.3s ease', transform: isIntroExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                  ▼
+                <span style={{
+                  fontSize: '0.9rem',
+                  padding: '0.25rem 0.5rem',
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: '4px'
+                }}>
+                  {isIntroExpanded ? '접기' : 'Click'}
                 </span>
               </button>
 
