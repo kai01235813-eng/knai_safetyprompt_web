@@ -31,13 +31,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Railway로 이미지 전달 (현재는 OCR 미구현)
+    // 이미지를 Base64로 인코딩
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    const base64Image = buffer.toString('base64')
+
+    // Railway로 이미지 전달
     const response = await fetch(`${RAILWAY_API_URL}/validate-image`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        image_base64: base64Image
+      }),
     })
 
     if (!response.ok) {
