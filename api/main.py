@@ -58,6 +58,12 @@ async def health():
     return {"status": "healthy"}
 
 
+@app.options("/validate")
+async def validate_options():
+    """CORS preflight 요청 처리"""
+    return {}
+
+
 @app.post("/validate", response_model=ValidateResponse)
 async def validate_prompt(request: ValidateRequest):
     """프롬프트 보안 검증"""
