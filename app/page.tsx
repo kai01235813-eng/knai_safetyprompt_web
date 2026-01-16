@@ -266,7 +266,7 @@ export default function Home() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="예: 데이터 기반 배전선로 휴전 및 부하전환 예측모델을 실제로 구현할 수 있는지 알려줘 (서버 IP정보 : 192.168.1.1)"
+                  placeholder="예: 데이터 기반 배전선로 휴전 및 부하 전환 예측모델, 송변전 SCADA 고장전류 예측시스템을 업무망에서 구현할 수 있는지 알려줘 (서버IP정보 : 192.168.1.1)"
                   style={{
                     width: '100%',
                     minHeight: '200px',
