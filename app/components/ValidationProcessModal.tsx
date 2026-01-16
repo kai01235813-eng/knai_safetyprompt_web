@@ -1,0 +1,330 @@
+'use client'
+
+interface ValidationProcessModalProps {
+  isOpen: boolean
+  onClose: () => void
+  result: any | null
+}
+
+export default function ValidationProcessModal({ isOpen, onClose, result }: ValidationProcessModalProps) {
+  if (!isOpen || !result) return null
+
+  const riskScore = result.risk_score || 0
+  const violations = result.violations || []
+  const extractedText = result.extracted_text
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '20px'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        maxWidth: '900px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        position: 'relative'
+      }}>
+        {/* 헤더 */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          background: 'white',
+          borderBottom: '2px solid #e5e7eb',
+          padding: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 10
+        }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e3a8a', margin: 0 }}>
+            🔍 검증 과정 상세 분석
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            닫기
+          </button>
+        </div>
+
+        {/* 내용 */}
+        <div style={{ padding: '20px' }}>
+
+          {/* OCR 분석 (이미지 검증인 경우) */}
+          {extractedText && (
+            <section style={{ marginBottom: '30px' }}>
+              <h3 style={{
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                color: '#1f2937',
+                marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{
+                  background: '#3b82f6',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.9rem'
+                }}>1</span>
+                OCR 텍스트 추출
+              </h3>
+              <div style={{
+                padding: '15px',
+                background: '#f0f9ff',
+                border: '2px solid #3b82f6',
+                borderRadius: '8px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#1e40af' }}>
+                  추출된 텍스트:
+                </div>
+                <pre style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  fontFamily: 'monospace',
+                  fontSize: '0.9rem',
+                  color: '#374151',
+                  margin: 0
+                }}>
+                  {extractedText}
+                </pre>
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                ✓ Tesseract OCR 엔진을 사용하여 이미지에서 텍스트 추출 완료
+              </div>
+            </section>
+          )}
+
+          {/* 패턴/키워드 탐지 */}
+          <section style={{ marginBottom: '30px' }}>
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              color: '#1f2937',
+              marginBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{
+                background: '#3b82f6',
+                color: 'white',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.9rem'
+              }}>{extractedText ? '2' : '1'}</span>
+              패턴 및 키워드 탐지
+            </h3>
+            <div style={{
+              padding: '15px',
+              background: violations.length > 0 ? '#fef2f2' : '#f0fdf4',
+              border: `2px solid ${violations.length > 0 ? '#ef4444' : '#22c55e'}`,
+              borderRadius: '8px'
+            }}>
+              {violations.length === 0 ? (
+                <div style={{ color: '#166534', fontWeight: 'bold' }}>
+                  ✓ 민감정보가 탐지되지 않았습니다
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontWeight: 'bold', marginBottom: '12px', color: '#991b1b' }}>
+                    ⚠️ 총 {violations.length}건의 위반사항이 탐지되었습니다
+                  </div>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    {violations.map((v: any, i: number) => (
+                      <div key={i} style={{
+                        padding: '10px',
+                        background: 'white',
+                        border: '1px solid #fecaca',
+                        borderRadius: '6px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                          <span style={{ fontWeight: 'bold', color: '#dc2626' }}>
+                            [{v.type}] {v.description}
+                          </span>
+                          <span style={{ fontSize: '0.875rem', color: '#991b1b' }}>
+                            심각도: {v.severity}/10
+                          </span>
+                        </div>
+                        <code style={{
+                          fontSize: '0.875rem',
+                          background: '#fee2e2',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          display: 'inline-block'
+                        }}>
+                          {v.matched_text}
+                        </code>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* 위험도 점수 계산 */}
+          <section style={{ marginBottom: '30px' }}>
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              color: '#1f2937',
+              marginBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{
+                background: '#3b82f6',
+                color: 'white',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.9rem'
+              }}>{extractedText ? '3' : '2'}</span>
+              위험도 점수 계산
+            </h3>
+            <div style={{
+              padding: '15px',
+              background: '#f9fafb',
+              border: '2px solid #d1d5db',
+              borderRadius: '8px'
+            }}>
+              <div style={{ marginBottom: '15px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
+                  기본 점수 (각 위반의 심각도 합계):
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937' }}>
+                  {violations.reduce((sum: number, v: any) => sum + v.severity, 0)}점
+                </div>
+              </div>
+
+              {violations.length > 0 && (
+                <>
+                  <div style={{ marginBottom: '15px' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
+                      유형별 가중치 적용:
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                      {Array.from(new Set(violations.map((v: any) => v.type))).map((type: any) => (
+                        <div key={type}>• {type}</div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '15px' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
+                      위반 건수 페널티:
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                      {violations.length}건 × 2 = {Math.min(violations.length * 2, 20)}점
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div style={{
+                paddingTop: '15px',
+                borderTop: '2px solid #d1d5db',
+                marginTop: '15px'
+              }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
+                  최종 위험도 점수:
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>
+                  {riskScore} / 100
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 보안 등급 결정 */}
+          <section>
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              color: '#1f2937',
+              marginBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{
+                background: '#3b82f6',
+                color: 'white',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.9rem'
+              }}>{extractedText ? '4' : '3'}</span>
+              최종 보안 등급 결정
+            </h3>
+            <div style={{
+              padding: '20px',
+              background: riskScore >= 60 ? '#fef2f2' : riskScore >= 40 ? '#fff7ed' : riskScore >= 15 ? '#fefce8' : '#f0fdf4',
+              border: `3px solid ${riskScore >= 60 ? '#ef4444' : riskScore >= 40 ? '#f97316' : riskScore >= 15 ? '#f59e0b' : '#22c55e'}`,
+              borderRadius: '8px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>
+                {riskScore >= 60 ? '🚫' : riskScore >= 40 ? '⚠️' : riskScore >= 15 ? '⚡' : '✅'}
+              </div>
+              <div style={{
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: riskScore >= 60 ? '#991b1b' : riskScore >= 40 ? '#9a3412' : riskScore >= 15 ? '#78350f' : '#14532d',
+                marginBottom: '10px'
+              }}>
+                {result.security_level}
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#6b7280' }}>
+                {riskScore < 15 && '전송 허용 - 생성형AI 사용 가능'}
+                {riskScore >= 15 && riskScore < 40 && '재검토 필요 - 내용 수정 권장'}
+                {riskScore >= 40 && riskScore < 60 && '민감정보 제거 필수'}
+                {riskScore >= 60 && '전송 금지 - 생성형AI 사용 불가'}
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  )
+}

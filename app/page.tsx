@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import SecurityRulesModal from './components/SecurityRulesModal'
+import ValidationProcessModal from './components/ValidationProcessModal'
 
 export default function Home() {
   const [prompt, setPrompt] = useState('')
@@ -9,6 +11,8 @@ export default function Home() {
   const [isValidating, setIsValidating] = useState(false)
   const [error, setError] = useState('')
   const [inputType, setInputType] = useState<'text' | 'image'>('text')
+  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false)
+  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
 
   const handleValidate = async () => {
     if (!prompt.trim() && !imageFile) {
@@ -197,7 +201,7 @@ export default function Home() {
             )}
 
             {/* 버튼 */}
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <button
                 onClick={handleValidate}
                 disabled={isValidating}
@@ -229,6 +233,38 @@ export default function Home() {
               >
                 🗑️ 초기화
               </button>
+              <button
+                onClick={() => setIsRulesModalOpen(true)}
+                style={{
+                  padding: '0.75rem 2rem',
+                  background: 'white',
+                  color: '#3b82f6',
+                  border: '2px solid #3b82f6',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                📋 보안규칙 확인
+              </button>
+              {result && (
+                <button
+                  onClick={() => setIsProcessModalOpen(true)}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    background: 'white',
+                    color: '#10b981',
+                    border: '2px solid #10b981',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🔍 검증과정 보기
+                </button>
+              )}
             </div>
 
             {/* 에러 메시지 */}
@@ -418,6 +454,17 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* 모달들 */}
+      <SecurityRulesModal
+        isOpen={isRulesModalOpen}
+        onClose={() => setIsRulesModalOpen(false)}
+      />
+      <ValidationProcessModal
+        isOpen={isProcessModalOpen}
+        onClose={() => setIsProcessModalOpen(false)}
+        result={result}
+      />
     </div>
   )
 }
