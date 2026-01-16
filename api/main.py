@@ -69,13 +69,35 @@ async def validate_prompt(request: ValidateRequest):
     """프롬프트 보안 검증"""
     if not VALIDATOR_AVAILABLE:
         raise HTTPException(
-            status_code=503, 
+            status_code=503,
             detail="Validator not available. Check deployment logs."
         )
-    
+
     try:
         result = validator.validate(request.prompt)
-        return ValidateResponse(success=True, result=result)
+
+        # ValidationResult를 JSON 직렬화 가능한 dict로 변환
+        result_dict = {
+            "is_safe": result.is_safe,
+            "security_level": result.security_level.value,  # Enum을 문자열로
+            "risk_score": result.risk_score,
+            "violations": [
+                {
+                    "type": v.type.value,  # Enum을 문자열로
+                    "description": v.description,
+                    "matched_text": v.matched_text,
+                    "position": list(v.position),
+                    "severity": v.severity
+                }
+                for v in result.violations
+            ],
+            "sanitized_prompt": result.sanitized_prompt,
+            "original_prompt": result.original_prompt,
+            "timestamp": result.timestamp,
+            "recommendation": result.recommendation
+        }
+
+        return ValidateResponse(success=True, result=result_dict)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
