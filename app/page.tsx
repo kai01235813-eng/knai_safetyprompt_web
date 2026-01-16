@@ -108,23 +108,32 @@ export default function Home() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #eff6ff, #e0e7ff)' }}>
       {/* 헤더 */}
       <header style={{ background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '1.25rem 0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <h1 style={{
-              fontSize: '1.75rem',
+              fontSize: 'clamp(1.25rem, 4vw, 1.75rem)',
               fontWeight: 'bold',
               color: '#1e3a8a',
               margin: 0,
-              lineHeight: 1.2
+              lineHeight: 1.3
             }}>
-              🛡️ 생성형 AI 프롬프트 보안 검증
+              🛡️ AI 프롬프트 보안 검증
             </h1>
             <div style={{
-              fontSize: '0.9rem',
-              color: '#6b7280',
-              fontWeight: '500'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: 'clamp(0.8rem, 2.5vw, 0.95rem)',
+              color: '#1e3a8a',
+              fontWeight: '600',
+              background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)',
+              padding: '0.35rem 0.85rem',
+              borderRadius: '6px',
+              border: '1px solid #bfdbfe',
+              width: 'fit-content'
             }}>
-              한국전력공사 경남본부 AI혁신팀
+              <span style={{ fontSize: '1.1em' }}>⚡</span>
+              <span>경남본부 AI혁신팀</span>
             </div>
           </div>
         </div>
