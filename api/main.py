@@ -9,9 +9,17 @@ import sys
 import os
 
 # Python 폴더를 sys.path에 추가
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'python'))
+python_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'python'))
+sys.path.insert(0, python_dir)
 
-from prompt_security_validator import KEPCOPromptSecurityValidator
+try:
+    from prompt_security_validator import KEPCOPromptSecurityValidator
+    validator = KEPCOPromptSecurityValidator()
+    VALIDATOR_AVAILABLE = True
+except Exception as e:
+    print(f"Warning: Could not load validator: {e}")
+    VALIDATOR_AVAILABLE = False
+    validator = None
 
 app = FastAPI(title="KEPCO Prompt Security API")
 
@@ -23,9 +31,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 검증기 인스턴스
-validator = KEPCOPromptSecurityValidator()
 
 
 class ValidateRequest(BaseModel):
@@ -40,23 +45,31 @@ class ValidateResponse(BaseModel):
 @app.get("/")
 async def root():
     return {
+@app.get("/")
+async def root():
+    return {
         "service": "KEPCO Prompt Security Validator",
         "status": "running",
+        "validator_loaded": VALIDATOR_AVAILABLE,
+        "python_path": sys.path[:3],
         "endpoints": ["/validate", "/health"]
-    }
-
-
-@app.get("/health")
+    }get("/health")
 async def health():
     return {"status": "healthy"}
-
-
 @app.post("/validate", response_model=ValidateResponse)
 async def validate_prompt(request: ValidateRequest):
     """프롬프트 보안 검증"""
+    if not VALIDATOR_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="Validator not available. Check deployment logs."
+        )
+    
     try:
         result = validator.validate(request.prompt)
         return ValidateResponse(success=True, result=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
