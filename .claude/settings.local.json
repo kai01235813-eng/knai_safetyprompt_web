@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Tesseract OCR support for image validation\n\nChanges:\n- Add pytesseract and Pillow to requirements.txt\n- Create nixpacks.toml to install Tesseract on Railway\n- Implement OCR in Railway API: extract text from images \\(Korean + English\\)\n- Update Vercel API route: send Base64-encoded images to Railway\n- Validate extracted text using existing security validator\n\nOCR extracts text from uploaded images and runs security checks on it\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Tesseract OCR support for image validation\n\nChanges:\n- Add pytesseract and Pillow to requirements.txt\n- Create nixpacks.toml to install Tesseract on Railway\n- Implement OCR in Railway API: extract text from images \\(Korean + English\\)\n- Update Vercel API route: send Base64-encoded images to Railway\n- Validate extracted text using existing security validator\n\nOCR extracts text from uploaded images and runs security checks on it\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)"
     ]
   }
 }

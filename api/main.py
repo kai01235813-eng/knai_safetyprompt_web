@@ -145,8 +145,12 @@ async def validate_image(request: ImageValidateRequest):
         image_data = base64.b64decode(request.image_base64)
         image = Image.open(BytesIO(image_data))
 
-        # OCR 실행 (한글 + 영어)
-        extracted_text = pytesseract.image_to_string(image, lang='kor+eng')
+        # OCR 실행 (한글 언어팩이 없으면 영어만 사용)
+        try:
+            extracted_text = pytesseract.image_to_string(image, lang='kor+eng')
+        except Exception as lang_error:
+            print(f"Korean OCR failed, trying English only: {lang_error}")
+            extracted_text = pytesseract.image_to_string(image, lang='eng')
 
         if not extracted_text.strip():
             return {
@@ -189,6 +193,9 @@ async def validate_image(request: ImageValidateRequest):
         return {"success": True, **result_dict}
 
     except Exception as e:
+        import traceback
+        error_detail = f"이미지 처리 오류: {str(e)}\n{traceback.format_exc()}"
+        print(error_detail)  # Railway 로그에 출력
         raise HTTPException(status_code=500, detail=f"이미지 처리 오류: {str(e)}")
 
 
