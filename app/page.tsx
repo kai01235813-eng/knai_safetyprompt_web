@@ -13,6 +13,7 @@ export default function Home() {
   const [inputType, setInputType] = useState<'text' | 'image'>('text')
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false)
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
+  const [isIntroExpanded, setIsIntroExpanded] = useState(false)
 
   const handleValidate = async () => {
     if (!prompt.trim() && !imageFile) {
@@ -139,58 +140,87 @@ export default function Home() {
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-            {/* 서비스 소개 */}
-            <div style={{
-              marginBottom: '2rem',
-              padding: '1.5rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '12px',
-              color: 'white'
-            }}>
-              <h2 style={{
-                fontSize: '1.3rem',
-                fontWeight: 'bold',
-                marginBottom: '1rem',
-                textAlign: 'center'
-              }}>
-                💡 이 서비스는 무엇인가요?
-              </h2>
-              <p style={{
-                fontSize: '1rem',
-                lineHeight: '1.8',
-                marginBottom: '1rem',
-                textAlign: 'center'
-              }}>
-                생성형 AI(ChatGPT, Claude 등)를 업무에 활용할 때 <strong>민감정보가 포함되어 있는지 자동으로 검증</strong>하는 서비스입니다.
-                <br />
-                개인정보, 기밀정보, 시스템 정보 등이 포함된 프롬프트를 AI에 전송하기 전에 사전 차단하여 정보 유출을 방지합니다.
-              </p>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginTop: '1rem'
-              }}>
-                <h3 style={{
+            {/* 서비스 소개 (토글) */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <button
+                onClick={() => setIsIntroExpanded(!isIntroExpanded)}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
                   fontSize: '1.1rem',
                   fontWeight: 'bold',
-                  marginBottom: '0.75rem',
-                  textAlign: 'center'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>💡 서비스 소개 및 사용 방법</span>
+                <span style={{ fontSize: '1.5rem', transition: 'transform 0.3s ease', transform: isIntroExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  ▼
+                </span>
+              </button>
+
+              {isIntroExpanded && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '1.5rem',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '12px',
+                  color: 'white'
                 }}>
-                  📌 사용 방법
-                </h3>
-                <ol style={{
-                  fontSize: '0.95rem',
-                  lineHeight: '1.8',
-                  paddingLeft: '1.5rem',
-                  margin: 0
-                }}>
-                  <li>아래 탭에서 <strong>텍스트 입력</strong> 또는 <strong>이미지 업로드</strong>를 선택하세요</li>
-                  <li>생성형 AI에 전달할 프롬프트를 입력하거나 이미지를 업로드하세요</li>
-                  <li><strong>🔍 보안 검증</strong> 버튼을 클릭하여 민감정보 포함 여부를 확인하세요</li>
-                  <li>검증 결과를 확인하고 <strong>안전하게 필터링된 프롬프트</strong>를 복사하여 AI에 사용하세요</li>
-                </ol>
-              </div>
+                  <h2 style={{
+                    fontSize: '1.3rem',
+                    fontWeight: 'bold',
+                    marginBottom: '1rem',
+                    textAlign: 'center'
+                  }}>
+                    💡 이 서비스는 무엇인가요?
+                  </h2>
+                  <p style={{
+                    fontSize: '1rem',
+                    lineHeight: '1.8',
+                    marginBottom: '1rem',
+                    textAlign: 'center'
+                  }}>
+                    생성형 AI(ChatGPT, Claude 등)를 업무에 활용할 때 <strong>민감정보가 포함되어 있는지 자동으로 검증</strong>하는 서비스입니다.
+                    <br />
+                    개인정보, 기밀정보, 시스템 정보 등이 포함된 프롬프트를 AI에 전송하기 전에 사전 차단하여 정보 유출을 방지합니다.
+                  </p>
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginTop: '1rem'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 'bold',
+                      marginBottom: '0.75rem',
+                      textAlign: 'center'
+                    }}>
+                      📌 사용 방법
+                    </h3>
+                    <ol style={{
+                      fontSize: '0.95rem',
+                      lineHeight: '1.8',
+                      paddingLeft: '1.5rem',
+                      margin: 0
+                    }}>
+                      <li>아래 탭에서 <strong>텍스트 입력</strong> 또는 <strong>이미지 업로드</strong>를 선택하세요</li>
+                      <li>생성형 AI에 전달할 프롬프트를 입력하거나 이미지를 업로드하세요</li>
+                      <li><strong>🔍 보안 검증</strong> 버튼을 클릭하여 민감정보 포함 여부를 확인하세요</li>
+                      <li>검증 결과를 확인하고 <strong>안전하게 필터링된 프롬프트</strong>를 복사하여 AI에 사용하세요</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 탭 */}
