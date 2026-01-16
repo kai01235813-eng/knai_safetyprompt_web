@@ -26,7 +26,7 @@ app = FastAPI(title="KEPCO Prompt Security API")
 # CORS 설정 (Vercel에서 접근 허용)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 프로덕션에서는 Vercel 도메인만 허용
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,17 +45,19 @@ class ValidateResponse(BaseModel):
 @app.get("/")
 async def root():
     return {
-@app.get("/")
-async def root():
-    return {
         "service": "KEPCO Prompt Security Validator",
         "status": "running",
         "validator_loaded": VALIDATOR_AVAILABLE,
         "python_path": sys.path[:3],
         "endpoints": ["/validate", "/health"]
-    }get("/health")
+    }
+
+
+@app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
 @app.post("/validate", response_model=ValidateResponse)
 async def validate_prompt(request: ValidateRequest):
     """프롬프트 보안 검증"""
@@ -68,8 +70,6 @@ async def validate_prompt(request: ValidateRequest):
     try:
         result = validator.validate(request.prompt)
         return ValidateResponse(success=True, result=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
