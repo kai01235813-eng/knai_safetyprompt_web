@@ -1,6 +1,12 @@
+# FastAPI Server
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.5
 python-multipart==0.0.20
-pytesseract==0.3.10
+
+# Image Processing
 Pillow==10.4.0
+
+# OCR Engines (choose one)
+pytesseract==0.3.10          # Tesseract OCR
+# rapidocr-onnxruntime>=1.3.0  # PaddleOCR (uncomment for better Korean support)
