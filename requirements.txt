@@ -7,6 +7,6 @@ python-multipart==0.0.20
 # Image Processing
 Pillow==10.4.0
 
-# OCR Engines (choose one)
-pytesseract==0.3.10          # Tesseract OCR
-# rapidocr-onnxruntime>=1.3.0  # PaddleOCR (uncomment for better Korean support)
+# OCR Engines
+pytesseract==0.3.10          # Tesseract OCR (fallback)
+rapidocr-onnxruntime>=1.3.0  # PaddleOCR (primary, better Korean support)
