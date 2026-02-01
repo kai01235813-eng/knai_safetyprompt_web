@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield,
@@ -18,38 +18,151 @@ import {
   Sparkles,
   Lock,
   Eye,
-  EyeOff,
   RefreshCw,
   HelpCircle,
   Zap,
-  Database,
-  Cloud,
-  Server
+  Search,
+  XCircle,
+  Play,
+  RotateCcw
 } from 'lucide-react'
 
-export default function RagSafetyPage() {
-  const [checklist, setChecklist] = useState([false, false, false, false])
-  const [showVolatileDemo, setShowVolatileDemo] = useState(false)
-  const [demoStep, setDemoStep] = useState(0)
+// 벡터 포인트 타입
+interface VectorPoint {
+  id: number
+  x: number
+  y: number
+  value: number
+  label: string
+  color: string
+}
 
-  const toggleCheck = (index: number) => {
-    const newChecklist = [...checklist]
-    newChecklist[index] = !newChecklist[index]
-    setChecklist(newChecklist)
+// 랜덤 벡터 생성
+const generateVectors = (count: number, labels: string[]): VectorPoint[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    x: 50 + Math.random() * 200,
+    y: 30 + Math.random() * 140,
+    value: Math.random(),
+    label: labels[i % labels.length],
+    color: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'][i % 5]
+  }))
+}
+
+export default function RagSafetyPage() {
+  // 데모 상태
+  const [demoPhase, setDemoPhase] = useState(0) // 0: 대기, 1: PDF 업로드, 2: 질문, 3: 초기화, 4: 재질문
+  const [vectors, setVectors] = useState<VectorPoint[]>([])
+  const [queryVector, setQueryVector] = useState<{x: number, y: number} | null>(null)
+  const [matchedVectors, setMatchedVectors] = useState<number[]>([])
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [showResult, setShowResult] = useState<string>('')
+
+  // 휘발 데모 상태 (섹션 2용)
+  const [showVolatileDemo, setShowVolatileDemo] = useState(false)
+  const [volatileStep, setVolatileStep] = useState(0)
+
+  const documentLabels = ['프로젝트명', '무지개떡', '예산정보', '일정계획', '담당자']
+
+  // 단계 1: PDF 업로드 시뮬레이션
+  const runPhase1 = () => {
+    setIsAnimating(true)
+    setDemoPhase(1)
+    setVectors([])
+    setQueryVector(null)
+    setMatchedVectors([])
+    setShowResult('')
+
+    // 벡터가 하나씩 생성되는 애니메이션
+    const newVectors = generateVectors(8, documentLabels)
+    newVectors.forEach((v, i) => {
+      setTimeout(() => {
+        setVectors(prev => [...prev, v])
+        if (i === newVectors.length - 1) {
+          setIsAnimating(false)
+          setShowResult('PDF 문서가 벡터로 변환되었습니다. (임시 메모리에 저장)')
+        }
+      }, i * 300)
+    })
   }
 
-  const completedCount = checklist.filter(Boolean).length
-  const allCompleted = completedCount === checklist.length
+  // 단계 2: 질문 시뮬레이션
+  const runPhase2 = () => {
+    if (vectors.length === 0) return
+    setIsAnimating(true)
+    setDemoPhase(2)
+    setShowResult('')
 
-  // 휘발 데모 애니메이션
+    // 질문 벡터 생성
+    const qVector = { x: 150, y: 100 }
+    setQueryVector(qVector)
+
+    // 연관 벡터 찾기 (거리 기반)
+    setTimeout(() => {
+      const matched = vectors
+        .map((v, i) => ({ i, dist: Math.sqrt((v.x - qVector.x) ** 2 + (v.y - qVector.y) ** 2) }))
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 3)
+        .map(m => m.i)
+
+      setMatchedVectors(matched)
+      setIsAnimating(false)
+      setShowResult('✅ "무지개떡" 정보를 찾았습니다! (벡터 유사도 검색)')
+    }, 1500)
+  }
+
+  // 단계 3: 세션 초기화
+  const runPhase3 = () => {
+    setIsAnimating(true)
+    setDemoPhase(3)
+    setShowResult('')
+
+    // 벡터들이 사라지는 애니메이션
+    setTimeout(() => {
+      setVectors([])
+      setQueryVector(null)
+      setMatchedVectors([])
+      setIsAnimating(false)
+      setShowResult('🗑️ 세션 종료 - 모든 벡터 데이터가 메모리에서 삭제되었습니다.')
+    }, 1000)
+  }
+
+  // 단계 4: 재질문 (빈 상태)
+  const runPhase4 = () => {
+    setIsAnimating(true)
+    setDemoPhase(4)
+    setShowResult('')
+
+    // 새 질문 벡터만 생성
+    const qVector = { x: 150, y: 100 }
+    setQueryVector(qVector)
+
+    setTimeout(() => {
+      setMatchedVectors([])
+      setIsAnimating(false)
+      setShowResult('❌ "무지개떡"에 대한 정보가 없습니다. (학습되지 않음 = 보안 확인!)')
+    }, 1500)
+  }
+
+  // 전체 리셋
+  const resetDemo = () => {
+    setDemoPhase(0)
+    setVectors([])
+    setQueryVector(null)
+    setMatchedVectors([])
+    setShowResult('')
+    setIsAnimating(false)
+  }
+
+  // 휘발 데모 (섹션 2)
   const runVolatileDemo = () => {
     setShowVolatileDemo(true)
-    setDemoStep(1)
-    setTimeout(() => setDemoStep(2), 1500)
-    setTimeout(() => setDemoStep(3), 3000)
-    setTimeout(() => setDemoStep(4), 4500)
+    setVolatileStep(1)
+    setTimeout(() => setVolatileStep(2), 1500)
+    setTimeout(() => setVolatileStep(3), 3000)
+    setTimeout(() => setVolatileStep(4), 4500)
     setTimeout(() => {
-      setDemoStep(0)
+      setVolatileStep(0)
       setShowVolatileDemo(false)
     }, 6500)
   }
@@ -60,35 +173,27 @@ export default function RagSafetyPage() {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       padding: '2rem'
     }}>
-      {/* 헤더 */}
-      <div style={{
-        maxWidth: '1000px',
-        margin: '0 auto'
-      }}>
-        {/* 뒤로가기 & 보안 배지 */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        {/* 헤더 */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '2rem'
         }}>
-          <a
-            href="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: 'white',
-              textDecoration: 'none',
-              fontSize: '0.95rem',
-              opacity: 0.9
-            }}
-          >
+          <a href="/" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'white',
+            textDecoration: 'none',
+            fontSize: '0.95rem',
+            opacity: 0.9
+          }}>
             <ArrowLeft size={18} />
             메인으로 돌아가기
           </a>
 
-          {/* KEPCO AI Security 배지 */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -178,7 +283,6 @@ export default function RagSafetyPage() {
             gap: '1.5rem',
             marginBottom: '2rem'
           }}>
-            {/* 학습 방식 */}
             <div style={{
               background: '#fef2f2',
               border: '2px solid #fecaca',
@@ -218,7 +322,6 @@ export default function RagSafetyPage() {
               </ul>
             </div>
 
-            {/* RAG 참조 방식 */}
             <div style={{
               background: '#f0fdf4',
               border: '2px solid #bbf7d0',
@@ -342,7 +445,6 @@ export default function RagSafetyPage() {
             position: 'relative',
             padding: '1rem 0'
           }}>
-            {/* 연결선 */}
             <div style={{
               position: 'absolute',
               top: '45px',
@@ -356,7 +458,7 @@ export default function RagSafetyPage() {
 
             {[
               { icon: <FileText size={28} />, title: '문서 업로드', desc: 'PDF/문서 선택', color: '#3b82f6' },
-              { icon: <Scissors size={28} />, title: '조각화', desc: 'Chunking 처리', color: '#8b5cf6' },
+              { icon: <Scissors size={28} />, title: '벡터 변환', desc: 'Embedding 처리', color: '#8b5cf6' },
               { icon: <MemoryStick size={28} />, title: 'RAM 참조', desc: '임시 메모리 로드', color: '#10b981' },
               { icon: <Trash2 size={28} />, title: '즉시 삭제', desc: '세션 종료 시 Flush', color: '#ef4444' }
             ].map((step, i) => (
@@ -387,20 +489,10 @@ export default function RagSafetyPage() {
                 }}>
                   <span style={{ color: step.color }}>{step.icon}</span>
                 </div>
-                <h4 style={{
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  color: '#1f2937',
-                  marginBottom: '0.25rem',
-                  textAlign: 'center'
-                }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.25rem', textAlign: 'center' }}>
                   {step.title}
                 </h4>
-                <p style={{
-                  fontSize: '0.85rem',
-                  color: '#6b7280',
-                  textAlign: 'center'
-                }}>
+                <p style={{ fontSize: '0.85rem', color: '#6b7280', textAlign: 'center' }}>
                   {step.desc}
                 </p>
               </motion.div>
@@ -408,17 +500,12 @@ export default function RagSafetyPage() {
           </div>
 
           {/* 휘발 데모 버튼 */}
-          <div style={{
-            marginTop: '2rem',
-            textAlign: 'center'
-          }}>
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
             <button
               onClick={runVolatileDemo}
               disabled={showVolatileDemo}
               style={{
-                background: showVolatileDemo
-                  ? '#9ca3af'
-                  : 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+                background: showVolatileDemo ? '#9ca3af' : 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '12px',
@@ -453,102 +540,35 @@ export default function RagSafetyPage() {
                   overflow: 'hidden'
                 }}
               >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '2rem'
-                }}>
-                  {/* 문서 */}
-                  <motion.div
-                    animate={{
-                      opacity: demoStep >= 1 ? 1 : 0.3,
-                      scale: demoStep === 1 ? 1.1 : 1
-                    }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
+                  <motion.div animate={{ opacity: volatileStep >= 1 ? 1 : 0.3, scale: volatileStep === 1 ? 1.1 : 1 }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <FileText size={40} color="#60a5fa" />
                     <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>문서</span>
                   </motion.div>
-
                   <ArrowRight size={24} color="#4b5563" />
-
-                  {/* RAM */}
-                  <motion.div
-                    animate={{
-                      opacity: demoStep >= 2 ? 1 : 0.3,
-                      scale: demoStep === 2 ? 1.1 : 1
-                    }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
+                  <motion.div animate={{ opacity: volatileStep >= 2 ? 1 : 0.3, scale: volatileStep === 2 ? 1.1 : 1 }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <MemoryStick size={40} color="#34d399" />
                     <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>RAM 로드</span>
                   </motion.div>
-
                   <ArrowRight size={24} color="#4b5563" />
-
-                  {/* AI 응답 */}
-                  <motion.div
-                    animate={{
-                      opacity: demoStep >= 3 ? 1 : 0.3,
-                      scale: demoStep === 3 ? 1.1 : 1
-                    }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
+                  <motion.div animate={{ opacity: volatileStep >= 3 ? 1 : 0.3, scale: volatileStep === 3 ? 1.1 : 1 }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <MessageSquare size={40} color="#a78bfa" />
                     <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>AI 응답</span>
                   </motion.div>
-
                   <ArrowRight size={24} color="#4b5563" />
-
-                  {/* 삭제 (휘발) */}
-                  <motion.div
-                    animate={{
-                      opacity: demoStep >= 4 ? 1 : 0.3,
-                      scale: demoStep === 4 ? [1, 1.3, 0] : 1
-                    }}
+                  <motion.div animate={{ opacity: volatileStep >= 4 ? 1 : 0.3, scale: volatileStep === 4 ? [1, 1.3, 0] : 1 }}
                     transition={{ duration: 0.5 }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <Trash2 size={40} color="#f87171" />
-                    <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>
-                      {demoStep === 4 ? '휘발 완료!' : '메모리 삭제'}
-                    </span>
+                    <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>{volatileStep === 4 ? '휘발 완료!' : '메모리 삭제'}</span>
                   </motion.div>
                 </div>
-
-                {demoStep === 4 && (
-                  <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      textAlign: 'center',
-                      color: '#4ade80',
-                      marginTop: '1.5rem',
-                      fontSize: '1rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
+                {volatileStep === 4 && (
+                  <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ textAlign: 'center', color: '#4ade80', marginTop: '1.5rem', fontSize: '1rem', fontWeight: 'bold' }}>
                     데이터가 메모리에서 완전히 사라졌습니다. AI는 더 이상 해당 정보를 알지 못합니다.
                   </motion.p>
                 )}
@@ -557,7 +577,7 @@ export default function RagSafetyPage() {
           </AnimatePresence>
         </motion.section>
 
-        {/* 섹션 3: 1분 보안 테스트 */}
+        {/* 섹션 3: 인터랙티브 벡터 시각화 데모 */}
         <motion.section
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -573,149 +593,269 @@ export default function RagSafetyPage() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: '0.75rem',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                borderRadius: '12px',
-                padding: '0.75rem',
-                display: 'flex'
-              }}>
-                <CheckCircle2 size={24} color="white" />
-              </div>
-              <div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#1f2937' }}>
-                  실전 검증: 1분 보안 테스트 가이드
-                </h2>
-                <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-                  직접 따라하며 RAG의 보안성을 확인하세요
-                </p>
-              </div>
-            </div>
-
-            {/* 진행률 */}
             <div style={{
-              background: allCompleted ? '#dcfce7' : '#f3f4f6',
-              borderRadius: '20px',
-              padding: '0.5rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
+              background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+              borderRadius: '12px',
+              padding: '0.75rem',
+              display: 'flex'
             }}>
-              <span style={{
-                fontSize: '0.9rem',
-                fontWeight: 'bold',
-                color: allCompleted ? '#16a34a' : '#6b7280'
-              }}>
-                {completedCount}/{checklist.length} 완료
-              </span>
-              {allCompleted && <CheckCircle2 size={18} color="#16a34a" />}
+              <CheckCircle2 size={24} color="white" />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#1f2937' }}>
+                실전 검증: 벡터 시각화 데모
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                RAG의 동작 원리를 직접 눈으로 확인하세요
+              </p>
             </div>
           </div>
 
-          {/* 체크리스트 카드 */}
+          {/* 단계 버튼들 */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem'
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '0.75rem',
+            marginBottom: '1.5rem'
           }}>
             {[
-              {
-                title: '1. 비밀 코드 심기',
-                desc: '나만 아는 가짜 정보가 담긴 PDF를 준비하세요.',
-                example: '예: "프로젝트명 \'무지개떡\'"',
-                icon: <FileText size={24} />,
-                color: '#3b82f6'
-              },
-              {
-                title: '2. 참조 답변 확인',
-                desc: 'RAG 시스템에 업로드 후 해당 정보를 질문하세요.',
-                example: 'AI가 "무지개떡"을 언급하면 참조 성공!',
-                icon: <MessageSquare size={24} />,
-                color: '#8b5cf6'
-              },
-              {
-                title: '3. 세션 초기화',
-                desc: '대화창을 종료하고 새로고침하세요.',
-                example: '브라우저 탭 닫기 또는 새 세션 시작',
-                icon: <RefreshCw size={24} />,
-                color: '#f59e0b'
-              },
-              {
-                title: '4. 보안 확인',
-                desc: '파일 없이 다시 질문하여 AI가 모른다고 답하는지 확인하세요.',
-                example: '"무지개떡이 뭐야?" → "알 수 없습니다"',
-                icon: <Shield size={24} />,
-                color: '#10b981'
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => toggleCheck(index)}
+              { phase: 1, label: '1. PDF 업로드', icon: <FileText size={18} />, color: '#3b82f6', desc: '벡터 생성' },
+              { phase: 2, label: '2. 질문하기', icon: <Search size={18} />, color: '#8b5cf6', desc: '유사도 검색' },
+              { phase: 3, label: '3. 세션 초기화', icon: <Trash2 size={18} />, color: '#f59e0b', desc: '메모리 삭제' },
+              { phase: 4, label: '4. 재질문', icon: <XCircle size={18} />, color: '#10b981', desc: '보안 확인' }
+            ].map((btn) => (
+              <button
+                key={btn.phase}
+                onClick={() => {
+                  if (btn.phase === 1) runPhase1()
+                  else if (btn.phase === 2) runPhase2()
+                  else if (btn.phase === 3) runPhase3()
+                  else if (btn.phase === 4) runPhase4()
+                }}
+                disabled={isAnimating || (btn.phase === 2 && vectors.length === 0) || (btn.phase === 3 && vectors.length === 0) || (btn.phase === 4 && vectors.length > 0)}
                 style={{
-                  background: checklist[index] ? '#f0fdf4' : '#f9fafb',
-                  border: `2px solid ${checklist[index] ? '#22c55e' : '#e5e7eb'}`,
+                  padding: '1rem',
+                  background: demoPhase === btn.phase
+                    ? `linear-gradient(135deg, ${btn.color}, ${btn.color}dd)`
+                    : '#f9fafb',
+                  color: demoPhase === btn.phase ? 'white' : '#374151',
+                  border: `2px solid ${demoPhase === btn.phase ? btn.color : '#e5e7eb'}`,
                   borderRadius: '12px',
-                  padding: '1.25rem',
-                  cursor: 'pointer',
+                  cursor: isAnimating ? 'not-allowed' : 'pointer',
+                  opacity: isAnimating ? 0.7 : 1,
                   transition: 'all 0.2s ease'
                 }}
               >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.75rem'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem'
-                  }}>
-                    <span style={{ color: item.color }}>{item.icon}</span>
-                    <h4 style={{
-                      fontSize: '1.05rem',
-                      fontWeight: 'bold',
-                      color: checklist[index] ? '#16a34a' : '#1f2937'
-                    }}>
-                      {item.title}
-                    </h4>
-                  </div>
-                  {checklist[index] ? (
-                    <CheckCircle2 size={24} color="#22c55e" />
-                  ) : (
-                    <Circle size={24} color="#d1d5db" />
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  {btn.icon}
+                  <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{btn.label}</span>
                 </div>
-                <p style={{
-                  fontSize: '0.9rem',
-                  color: '#4b5563',
-                  marginBottom: '0.5rem'
-                }}>
-                  {item.desc}
-                </p>
-                <p style={{
-                  fontSize: '0.85rem',
-                  color: '#9ca3af',
-                  fontStyle: 'italic'
-                }}>
-                  {item.example}
-                </p>
-              </motion.div>
+                <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{btn.desc}</span>
+              </button>
             ))}
           </div>
 
-          {/* 완료 메시지 */}
+          {/* 벡터 시각화 캔버스 */}
+          <div style={{
+            background: '#1e293b',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            position: 'relative',
+            height: '280px',
+            overflow: 'hidden'
+          }}>
+            {/* 그리드 배경 */}
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.1 }}>
+              <defs>
+                <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="white" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+
+            {/* 축 레이블 */}
+            <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%) rotate(-90deg)', color: '#64748b', fontSize: '0.75rem' }}>
+              Vector Dimension 2
+            </div>
+            <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', color: '#64748b', fontSize: '0.75rem' }}>
+              Vector Dimension 1
+            </div>
+
+            {/* 벡터 포인트들 */}
+            <AnimatePresence>
+              {vectors.map((v, i) => (
+                <motion.div
+                  key={v.id}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{
+                    scale: matchedVectors.includes(i) ? 1.3 : 1,
+                    opacity: 1,
+                    boxShadow: matchedVectors.includes(i) ? `0 0 20px ${v.color}` : 'none'
+                  }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  style={{
+                    position: 'absolute',
+                    left: v.x,
+                    top: v.y,
+                    width: matchedVectors.includes(i) ? '50px' : '40px',
+                    height: matchedVectors.includes(i) ? '50px' : '40px',
+                    borderRadius: '50%',
+                    background: v.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: matchedVectors.includes(i) ? '3px solid white' : '2px solid rgba(255,255,255,0.3)',
+                    zIndex: matchedVectors.includes(i) ? 10 : 1
+                  }}
+                >
+                  <span style={{ color: 'white', fontSize: '0.65rem', fontWeight: 'bold', textAlign: 'center' }}>
+                    {v.label.slice(0, 3)}
+                  </span>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* 질문 벡터 */}
+            <AnimatePresence>
+              {queryVector && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  style={{
+                    position: 'absolute',
+                    left: queryVector.x - 25,
+                    top: queryVector.y - 25,
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '3px solid white',
+                    boxShadow: '0 0 30px rgba(236, 72, 153, 0.6)',
+                    zIndex: 20
+                  }}
+                >
+                  <Search size={20} color="white" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* 연결선 */}
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 5 }}>
+              {queryVector && matchedVectors.map((idx) => {
+                const v = vectors[idx]
+                if (!v) return null
+                return (
+                  <motion.line
+                    key={idx}
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.6 }}
+                    x1={queryVector.x}
+                    y1={queryVector.y}
+                    x2={v.x + 20}
+                    y2={v.y + 20}
+                    stroke="#ec4899"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                  />
+                )
+              })}
+            </svg>
+
+            {/* 빈 상태 메시지 */}
+            {demoPhase === 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                color: '#64748b'
+              }}>
+                <Play size={48} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                <p>위 버튼을 클릭하여 데모를 시작하세요</p>
+              </div>
+            )}
+
+            {/* 단계 4: 빈 벡터 공간 표시 */}
+            {demoPhase === 4 && vectors.length === 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '30%',
+                right: '20%',
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '2px dashed #ef4444',
+                borderRadius: '12px',
+                padding: '1rem 1.5rem',
+                color: '#fca5a5'
+              }}>
+                <p style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>벡터 DB: 비어있음</p>
+                <p style={{ fontSize: '0.85rem', opacity: 0.8 }}>학습된 데이터 없음</p>
+              </div>
+            )}
+          </div>
+
+          {/* 결과 메시지 */}
           <AnimatePresence>
-            {allCompleted && (
+            {showResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  marginTop: '1rem',
+                  padding: '1rem 1.5rem',
+                  background: demoPhase === 4 ? '#fef2f2' : demoPhase === 3 ? '#fefce8' : '#f0fdf4',
+                  border: `2px solid ${demoPhase === 4 ? '#fecaca' : demoPhase === 3 ? '#fef08a' : '#bbf7d0'}`,
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  color: demoPhase === 4 ? '#991b1b' : demoPhase === 3 ? '#854d0e' : '#166534',
+                  fontWeight: '600'
+                }}
+              >
+                {showResult}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 리셋 버튼 */}
+          {demoPhase > 0 && (
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <button
+                onClick={resetDemo}
+                style={{
+                  background: 'transparent',
+                  border: '2px solid #9ca3af',
+                  borderRadius: '8px',
+                  padding: '0.5rem 1rem',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  margin: '0 auto'
+                }}
+              >
+                <RotateCcw size={16} />
+                처음부터 다시 시작
+              </button>
+            </div>
+          )}
+
+          {/* 검증 완료 메시지 */}
+          <AnimatePresence>
+            {demoPhase === 4 && showResult.includes('보안 확인') && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
                 style={{
                   marginTop: '1.5rem',
                   background: 'linear-gradient(135deg, #dcfce7, #d1fae5)',
@@ -725,24 +865,14 @@ export default function RagSafetyPage() {
                   textAlign: 'center'
                 }}
               >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.75rem',
-                  marginBottom: '0.75rem'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                   <Shield size={32} color="#16a34a" />
-                  <h3 style={{
-                    fontSize: '1.3rem',
-                    fontWeight: 'bold',
-                    color: '#166534'
-                  }}>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#166534' }}>
                     보안 검증 완료!
                   </h3>
                 </div>
                 <p style={{ color: '#15803d', fontSize: '1rem' }}>
-                  축하합니다! RAG 시스템이 데이터를 학습하지 않고, 세션 종료 시 완전히 삭제됨을 직접 확인하셨습니다.
+                  RAG 시스템이 데이터를 학습하지 않고, 세션 종료 시 완전히 삭제됨을 직접 확인하셨습니다.
                 </p>
                 <p style={{ color: '#166534', fontSize: '0.9rem', marginTop: '0.75rem', fontWeight: '600' }}>
                   이제 안심하고 사내 문서를 AI와 함께 활용하세요!
@@ -752,7 +882,7 @@ export default function RagSafetyPage() {
           </AnimatePresence>
         </motion.section>
 
-        {/* 푸터 안내 */}
+        {/* 푸터 */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
