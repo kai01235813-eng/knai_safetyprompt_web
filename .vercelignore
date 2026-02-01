@@ -1,0 +1,6 @@
+# Python backend (deployed on Railway, not Vercel)
+api/
+python/
+Dockerfile
+Procfile
+requirements.txt
