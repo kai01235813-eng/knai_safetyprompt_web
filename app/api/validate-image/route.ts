@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from 'next/server'
 const RAILWAY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export async function POST(request: NextRequest) {
+  // 디버깅: 환경변수 확인
+  console.log('RAILWAY_API_URL:', RAILWAY_API_URL)
+
   try {
     const formData = await request.formData()
     const file = formData.get('image') as File
