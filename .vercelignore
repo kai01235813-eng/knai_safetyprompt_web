@@ -1,6 +1,7 @@
 # Python backend (deployed on Railway, not Vercel)
-api/
-python/
+# Note: /api/ is for Railway FastAPI, /app/api/ is for Next.js API routes (don't ignore!)
+/api/
+/python/
 Dockerfile
 Procfile
 requirements.txt
