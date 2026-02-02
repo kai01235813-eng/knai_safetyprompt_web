@@ -24,6 +24,7 @@ python_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'pyth
 sys.path.insert(0, python_dir)
 
 from prompt_security_validator import KEPCOPromptSecurityValidator
+from llm_corrector import PowerIndustryOCRCorrector
 
 
 # ============================================================
@@ -38,6 +39,12 @@ class ValidateRequest(BaseModel):
 class ImageValidateRequest(BaseModel):
     """이미지 검증 요청 (Base64)"""
     image_base64: str = Field(..., description="Base64 인코딩된 이미지")
+
+
+class OCRCorrectRequest(BaseModel):
+    """OCR 텍스트 교정 요청"""
+    ocr_text: str = Field(..., min_length=1, description="교정할 OCR 추출 텍스트")
+    model_name: Optional[str] = Field(None, description="사용할 LLM 모델 (기본: qwen2.5-7b)")
 
 
 class ViolationItem(BaseModel):
@@ -73,6 +80,8 @@ class AppState:
     ocr_engine = None  # OCREngine 인스턴스
     ocr_engine_name: str = "none"
     ocr_available: bool = False
+    llm_corrector: Optional[PowerIndustryOCRCorrector] = None
+    llm_available: bool = False
 
 
 app_state = AppState()
@@ -141,6 +150,23 @@ def _init_ocr_engine():
         app_state.ocr_available = False
 
 
+def _init_llm_corrector():
+    """LLM Corrector 초기화 (HF_API_KEY 환경변수 필요)"""
+    hf_api_key = os.getenv("HF_API_KEY")
+    if not hf_api_key:
+        print("ℹ️ HF_API_KEY not set - LLM text correction disabled")
+        app_state.llm_available = False
+        return
+
+    try:
+        app_state.llm_corrector = PowerIndustryOCRCorrector()
+        app_state.llm_available = True
+        print("✅ LLM Corrector: Hugging Face API loaded")
+    except Exception as e:
+        print(f"⚠️ LLM Corrector init failed: {e}")
+        app_state.llm_available = False
+
+
 # ============================================================
 # Lifespan Management
 # ============================================================
@@ -161,6 +187,9 @@ async def lifespan(app: FastAPI):
 
     # OCR 엔진 초기화
     _init_ocr_engine()
+
+    # LLM Corrector 초기화 (HF_API_KEY가 있는 경우만)
+    _init_llm_corrector()
 
     yield
 
@@ -198,12 +227,13 @@ async def root():
     """루트 엔드포인트 - 서비스 정보"""
     return {
         "service": "KEPCO Prompt Security Validator",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "status": "running",
         "validator_loaded": app_state.validator is not None,
         "ocr_engine": app_state.ocr_engine_name,
         "ocr_available": app_state.ocr_available,
-        "endpoints": ["/validate", "/validate-image", "/health"]
+        "llm_corrector_available": app_state.llm_available,
+        "endpoints": ["/validate", "/validate-image", "/correct-ocr", "/health"]
     }
 
 
@@ -374,6 +404,53 @@ async def validate_image(request: ImageValidateRequest):
         error_detail = f"이미지 처리 오류: {str(e)}\n{traceback.format_exc()}"
         print(error_detail)
         raise HTTPException(status_code=500, detail=f"이미지 처리 오류: {str(e)}")
+
+
+@app.post("/correct-ocr")
+async def correct_ocr_text(request: OCRCorrectRequest):
+    """
+    OCR 텍스트 교정 (Hugging Face LLM 사용)
+
+    - 전력산업 도메인 특화 교정
+    - 팩스 노이즈로 인한 오타 수정
+    - 전기사용신청서 필드 자동 추출
+    """
+    # LLM 사용 불가 시 안내
+    if not app_state.llm_available or not app_state.llm_corrector:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM Corrector not available. Set HF_API_KEY environment variable."
+        )
+
+    if not request.ocr_text.strip():
+        raise HTTPException(status_code=400, detail="OCR 텍스트가 비어있습니다")
+
+    try:
+        # 모델 지정 시 새 인스턴스 생성
+        if request.model_name:
+            corrector = PowerIndustryOCRCorrector(request.model_name)
+        else:
+            corrector = app_state.llm_corrector
+
+        result = corrector.correct_text(request.ocr_text)
+
+        return {
+            "success": result.get("success", False),
+            "corrected_text": result.get("corrected_text", ""),
+            "corrections": result.get("corrections", []),
+            "confidence": result.get("confidence", 0.0),
+            "extracted_fields": result.get("extracted_fields", {}),
+            "original_text": request.ocr_text,
+            "model_used": corrector.model_id,
+            "error": result.get("error")
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        import traceback
+        print(f"LLM 교정 오류: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"텍스트 교정 오류: {str(e)}")
 
 
 # ============================================================
