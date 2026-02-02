@@ -12,6 +12,15 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
   const riskScore = result.risk_score || 0
   const violations = result.violations || []
   const extractedText = result.extracted_text
+  const llmCorrection = result.llm_correction
+
+  // 단계 번호 계산 (LLM 교정 여부에 따라 동적으로)
+  const hasLLM = llmCorrection?.used
+  const getStepNumber = (baseStep: number) => {
+    if (!extractedText) return baseStep
+    if (hasLLM) return baseStep + 1
+    return baseStep
+  }
 
   return (
     <div style={{
@@ -122,6 +131,200 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
             </section>
           )}
 
+          {/* LLM 텍스트 교정 (Hugging Face) */}
+          {extractedText && llmCorrection && (
+            <section style={{ marginBottom: '30px' }}>
+              <h3 style={{
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                color: '#1f2937',
+                marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{
+                  background: llmCorrection.used ? '#8b5cf6' : '#9ca3af',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.9rem'
+                }}>2</span>
+                🤗 Hugging Face LLM 텍스트 교정
+              </h3>
+
+              {llmCorrection.used ? (
+                <div style={{
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+                  border: '2px solid #8b5cf6',
+                  borderRadius: '8px'
+                }}>
+                  {/* 모델 정보 */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '15px',
+                    padding: '8px 12px',
+                    background: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #c4b5fd'
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>🤖</span>
+                    <span style={{ fontWeight: 'bold', color: '#6d28d9' }}>모델:</span>
+                    <code style={{
+                      background: '#ede9fe',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem',
+                      color: '#5b21b6'
+                    }}>
+                      {llmCorrection.model}
+                    </code>
+                    <span style={{
+                      marginLeft: 'auto',
+                      background: '#22c55e',
+                      color: 'white',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold'
+                    }}>
+                      신뢰도: {(llmCorrection.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+
+                  {/* 원본 vs 교정 비교 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                    <div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#991b1b', fontSize: '0.9rem' }}>
+                        ❌ 원본 OCR (오타 포함)
+                      </div>
+                      <div style={{
+                        padding: '10px',
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        maxHeight: '150px',
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}>
+                        {llmCorrection.original_ocr_text}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#166534', fontSize: '0.9rem' }}>
+                        ✅ LLM 교정 완료
+                      </div>
+                      <div style={{
+                        padding: '10px',
+                        background: '#f0fdf4',
+                        border: '1px solid #86efac',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        maxHeight: '150px',
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}>
+                        {llmCorrection.corrected_text}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 교정 내역 */}
+                  {llmCorrection.corrections && llmCorrection.corrections.length > 0 && (
+                    <div style={{ marginBottom: '15px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#6d28d9', fontSize: '0.9rem' }}>
+                        📝 교정 내역 ({llmCorrection.corrections.length}건)
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                      }}>
+                        {llmCorrection.corrections.slice(0, 10).map((corr: any, i: number) => (
+                          <div key={i} style={{
+                            padding: '4px 10px',
+                            background: 'white',
+                            border: '1px solid #c4b5fd',
+                            borderRadius: '20px',
+                            fontSize: '0.8rem'
+                          }}>
+                            <span style={{ color: '#dc2626', textDecoration: 'line-through' }}>{corr.original}</span>
+                            <span style={{ margin: '0 4px' }}>→</span>
+                            <span style={{ color: '#16a34a', fontWeight: 'bold' }}>{corr.corrected}</span>
+                          </div>
+                        ))}
+                        {llmCorrection.corrections.length > 10 && (
+                          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                            +{llmCorrection.corrections.length - 10}건 더
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 추출된 필드 */}
+                  {llmCorrection.extracted_fields && Object.keys(llmCorrection.extracted_fields).some(k => llmCorrection.extracted_fields[k]) && (
+                    <div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#6d28d9', fontSize: '0.9rem' }}>
+                        📋 자동 추출된 필드
+                      </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                        gap: '8px'
+                      }}>
+                        {Object.entries(llmCorrection.extracted_fields)
+                          .filter(([_, value]) => value)
+                          .map(([key, value]: [string, any]) => (
+                            <div key={key} style={{
+                              padding: '6px 10px',
+                              background: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              fontSize: '0.8rem'
+                            }}>
+                              <span style={{ color: '#6b7280' }}>{key}:</span>{' '}
+                              <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{value}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#7c3aed' }}>
+                    ✓ Hugging Face Inference API를 통해 전력산업 도메인 특화 텍스트 교정 완료
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  padding: '15px',
+                  background: '#f9fafb',
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '8px',
+                  color: '#6b7280'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>ℹ️</span>
+                    <span>LLM 텍스트 교정 미사용</span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+                    {llmCorrection.reason || llmCorrection.error || 'HF_API_KEY 환경변수가 설정되지 않았습니다'}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* 패턴/키워드 탐지 */}
           <section style={{ marginBottom: '30px' }}>
             <h3 style={{
@@ -143,7 +346,7 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.9rem'
-              }}>{extractedText ? '2' : '1'}</span>
+              }}>{extractedText ? (hasLLM ? '3' : '2') : '1'}</span>
               패턴 및 키워드 탐지
             </h3>
             <div style={{
@@ -215,7 +418,7 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.9rem'
-              }}>{extractedText ? '3' : '2'}</span>
+              }}>{extractedText ? (hasLLM ? '4' : '3') : '2'}</span>
               위험도 점수 계산
             </h3>
             <div style={{
@@ -293,7 +496,7 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.9rem'
-              }}>{extractedText ? '4' : '3'}</span>
+              }}>{extractedText ? (hasLLM ? '5' : '4') : '3'}</span>
               최종 보안 등급 결정
             </h3>
             <div style={{

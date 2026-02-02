@@ -497,6 +497,33 @@ export default function Home() {
                   <p style={{ fontSize: '1.1rem', color: getRiskColor(result.security_level).text, fontWeight: '600' }}>
                     위험 점수: {result.risk_score}/100
                   </p>
+
+                  {/* LLM 사용 뱃지 */}
+                  {result.llm_correction?.used && (
+                    <div style={{
+                      marginTop: '1rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                      color: 'white',
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      fontWeight: 'bold'
+                    }}>
+                      <span>🤗</span>
+                      <span>Hugging Face LLM 교정 적용</span>
+                      <span style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        padding: '2px 6px',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem'
+                      }}>
+                        {result.llm_correction.corrections?.length || 0}건 수정
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* 위험도 프로그레스 바 */}

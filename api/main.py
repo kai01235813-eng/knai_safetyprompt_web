@@ -371,11 +371,49 @@ async def validate_image(request: ImageValidateRequest):
                 "original_prompt": "",
                 "timestamp": datetime.now().isoformat(),
                 "recommendation": "이미지에서 텍스트를 추출할 수 없습니다.",
-                "extracted_text": ""
+                "extracted_text": "",
+                "llm_correction": None
             }
 
-        # 보안 검증
-        result = app_state.validator.validate(extracted_text)
+        # LLM 텍스트 교정 (활성화된 경우)
+        llm_correction_result = None
+        text_for_validation = extracted_text
+
+        if app_state.llm_available and app_state.llm_corrector:
+            try:
+                llm_result = app_state.llm_corrector.correct_text(extracted_text)
+                if llm_result.get("success"):
+                    llm_correction_result = {
+                        "used": True,
+                        "model": app_state.llm_corrector.model_id,
+                        "original_ocr_text": extracted_text,
+                        "corrected_text": llm_result.get("corrected_text", extracted_text),
+                        "corrections": llm_result.get("corrections", []),
+                        "confidence": llm_result.get("confidence", 0.0),
+                        "extracted_fields": llm_result.get("extracted_fields", {})
+                    }
+                    # 교정된 텍스트로 검증 수행
+                    text_for_validation = llm_result.get("corrected_text", extracted_text)
+                else:
+                    llm_correction_result = {
+                        "used": False,
+                        "error": llm_result.get("error", "교정 실패"),
+                        "model": app_state.llm_corrector.model_id
+                    }
+            except Exception as e:
+                llm_correction_result = {
+                    "used": False,
+                    "error": str(e),
+                    "model": app_state.llm_corrector.model_id if app_state.llm_corrector else "unknown"
+                }
+        else:
+            llm_correction_result = {
+                "used": False,
+                "reason": "LLM Corrector not available (HF_API_KEY not set)"
+            }
+
+        # 보안 검증 (교정된 텍스트 또는 원본 OCR 텍스트 사용)
+        result = app_state.validator.validate(text_for_validation)
 
         return {
             "success": True,
@@ -396,7 +434,8 @@ async def validate_image(request: ImageValidateRequest):
             "original_prompt": result.original_prompt,
             "timestamp": result.timestamp,
             "recommendation": result.recommendation,
-            "extracted_text": extracted_text
+            "extracted_text": extracted_text,
+            "llm_correction": llm_correction_result
         }
 
     except Exception as e:
