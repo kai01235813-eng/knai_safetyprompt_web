@@ -47,11 +47,22 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '검증 요청 실패')
+        let errorMessage = '검증 요청 실패'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          // JSON 파싱 실패 시 기본 에러 메시지 사용
+        }
+        throw new Error(errorMessage)
       }
 
-      const data = await response.json()
+      let data
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error('서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.')
+      }
       setResult(data)
     } catch (err: any) {
       setError(err.message || '검증 중 오류가 발생했습니다')
@@ -140,69 +151,37 @@ export default function Home() {
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <div style={{ marginBottom: '2rem' }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-            {/* 서비스 소개 & RAG 가이드 버튼 */}
+            {/* 서비스 소개 버튼 */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <button
-                  onClick={() => setIsIntroExpanded(!isIntroExpanded)}
-                  style={{
-                    flex: 1,
-                    padding: '1rem',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <span>💡 서비스 소개</span>
-                  <span style={{
-                    fontSize: '0.85rem',
-                    padding: '0.2rem 0.4rem',
-                    background: 'rgba(255,255,255,0.2)',
-                    borderRadius: '4px'
-                  }}>
-                    {isIntroExpanded ? '접기' : 'Click'}
-                  </span>
-                </button>
-                <a
-                  href="/rag-safety"
-                  style={{
-                    flex: 1,
-                    padding: '1rem',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <span>📄 RAG 보안 가이드</span>
-                  <span style={{
-                    fontSize: '0.85rem',
-                    padding: '0.2rem 0.4rem',
-                    background: 'rgba(255,255,255,0.2)',
-                    borderRadius: '4px'
-                  }}>
-                    NEW
-                  </span>
-                </a>
-              </div>
+              <button
+                onClick={() => setIsIntroExpanded(!isIntroExpanded)}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>💡 서비스 소개</span>
+                <span style={{
+                  fontSize: '0.85rem',
+                  padding: '0.2rem 0.4rem',
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: '4px'
+                }}>
+                  {isIntroExpanded ? '접기' : 'Click'}
+                </span>
+              </button>
 
               {isIntroExpanded && (
                 <div style={{
