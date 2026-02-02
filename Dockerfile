@@ -21,5 +21,5 @@ COPY . .
 # PORT 환경변수 (Railway에서 제공)
 ENV PORT=8000
 
-# 서버 실행
-CMD python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
+# 서버 실행 (shell form으로 환경변수 확장)
+CMD ["sh", "-c", "python -m uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
