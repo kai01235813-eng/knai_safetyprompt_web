@@ -142,6 +142,16 @@ export default function Home() {
             }}>
               <span style={{ fontSize: '1.1em' }}>⚡</span>
               <span>경남본부 AI혁신팀</span>
+              <a href="/logs" style={{
+                marginLeft: '12px',
+                padding: '4px 12px',
+                background: '#1e293b',
+                color: 'white',
+                borderRadius: '12px',
+                textDecoration: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+              }}>📊 대시보드</a>
             </div>
           </div>
         </div>

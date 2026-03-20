@@ -1,5 +1,9 @@
 # dependencies
 /node_modules
+
+# audit log db
+/data/
+*.db
 /.pnp
 .pnp.js
 

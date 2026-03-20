@@ -25,6 +25,7 @@ sys.path.insert(0, python_dir)
 
 from prompt_security_validator import KEPCOPromptSecurityValidator
 from llm_corrector import PowerIndustryOCRCorrector
+from audit_logger import init_db, log_validation, get_recent_logs, get_log_detail, get_dashboard_stats, cleanup_old_logs
 
 
 # ============================================================
@@ -191,6 +192,14 @@ async def lifespan(app: FastAPI):
     # LLM Corrector 초기화 (HF_API_KEY가 있는 경우만)
     _init_llm_corrector()
 
+    # Audit Log DB 초기화
+    try:
+        init_db()
+        # 기동 시 오래된 로그 정리
+        cleanup_old_logs()
+    except Exception as e:
+        print(f"⚠️ Audit log DB init failed: {e}")
+
     yield
 
     # Shutdown
@@ -273,6 +282,9 @@ async def validate_prompt(request: ValidateRequest):
         raise HTTPException(status_code=400, detail="프롬프트가 비어있습니다")
 
     try:
+        import time as _time
+        _start = _time.time()
+
         result = app_state.validator.validate(request.prompt)
 
         result_dict = {
@@ -303,6 +315,18 @@ async def validate_prompt(request: ValidateRequest):
                 for r in (result.regulation_refs or [])
             ]
         }
+
+        # 검증 이력 로깅
+        _elapsed = int((_time.time() - _start) * 1000)
+        try:
+            log_validation(
+                prompt=request.prompt,
+                result=result_dict,
+                input_type="text",
+                response_time_ms=_elapsed,
+            )
+        except Exception as log_err:
+            print(f"⚠️ Audit log write failed: {log_err}")
 
         return ValidateResponse(success=True, result=result_dict)
     except Exception as e:
@@ -499,6 +523,42 @@ async def correct_ocr_text(request: OCRCorrectRequest):
         import traceback
         print(f"LLM 교정 오류: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"텍스트 교정 오류: {str(e)}")
+
+
+# ============================================================
+# Audit Log Endpoints
+# ============================================================
+
+@app.get("/logs")
+async def list_logs(limit: int = 50, offset: int = 0, level: str = "all"):
+    """검증 이력 목록 조회"""
+    try:
+        return get_recent_logs(limit=min(limit, 200), offset=offset, level_filter=level)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/logs/{log_id}")
+async def detail_log(log_id: int):
+    """검증 이력 상세 조회"""
+    try:
+        detail = get_log_detail(log_id)
+        if not detail:
+            raise HTTPException(status_code=404, detail="로그를 찾을 수 없습니다")
+        return detail
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/logs/stats/dashboard")
+async def dashboard_stats(days: int = 30):
+    """대시보드 통계 조회"""
+    try:
+        return get_dashboard_stats(days=min(days, 365))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================
