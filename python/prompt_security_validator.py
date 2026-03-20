@@ -31,6 +31,15 @@ class ViolationType(Enum):
 
 
 @dataclass
+class RegulationReference:
+    """관련 법규 참조 정보"""
+    law: str           # 법규명
+    article: str       # 조항
+    description: str   # 설명
+    source: str        # 출처 문서 (privacy/security/checklist)
+
+
+@dataclass
 class SecurityViolation:
     """보안 위반 항목"""
     type: ViolationType
@@ -51,6 +60,7 @@ class ValidationResult:
     original_prompt: str
     timestamp: str
     recommendation: str
+    regulation_refs: List[RegulationReference] = None
 
 
 class KEPCOPromptSecurityValidator:
@@ -60,6 +70,7 @@ class KEPCOPromptSecurityValidator:
         self._init_patterns()
         self._init_keywords()
         self._init_rules()
+        self._init_regulation_map()
 
     def _init_patterns(self):
         """정규식 패턴 초기화"""
@@ -276,6 +287,175 @@ class KEPCOPromptSecurityValidator:
             SecurityLevel.BLOCKED: 60
         }
 
+    def _init_regulation_map(self):
+        """위반유형별 법규 매핑 초기화"""
+        self.regulation_map: Dict[ViolationType, List[RegulationReference]] = {
+            ViolationType.PERSONAL_INFO: [
+                RegulationReference(
+                    law="개인정보보호법",
+                    article="제3조 (개인정보 보호 원칙)",
+                    description="목적 명확성, 최소수집, 안전한 관리 원칙 위반 가능",
+                    source="privacy"
+                ),
+                RegulationReference(
+                    law="개인정보보호법",
+                    article="제15조 (수집·이용)",
+                    description="적법근거 없는 개인정보 수집·이용 금지",
+                    source="privacy"
+                ),
+                RegulationReference(
+                    law="개인정보보호법",
+                    article="제34조의2 (노출된 개인정보 삭제·차단)",
+                    description="고유식별정보, 계좌정보, 신용카드정보 등 노출 방지 의무",
+                    source="privacy"
+                ),
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="T07 민감정보 입력·유출",
+                    description="사용자가 AI에 민감정보 입력 시 외부 유출 위험",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="⑦ AI시스템 입·출력 보안대책",
+                    description="입·출력 필터링으로 민감정보 탐지·차단 필요",
+                    source="checklist"
+                ),
+            ],
+            ViolationType.CONFIDENTIAL: [
+                RegulationReference(
+                    law="국가정보보안 기본지침",
+                    article="제15조",
+                    description="첨단 정보통신기술 시스템 보안성검토 의무",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="N2SF (국가 망 보안체계)",
+                    article="C/S/O 등급분류",
+                    description="기밀(C)등급 정보의 외부망 AI 입력 금지",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="T05 학습데이터 비인가자 접근",
+                    description="권한 미보유자에게 기밀 학습데이터 노출 위험",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="③ 보안등급에 맞는 학습데이터 구성·활용",
+                    description="AI시스템 활용목적·등급에 맞는 데이터만 사용",
+                    source="checklist"
+                ),
+            ],
+            ViolationType.TECHNICAL_INFO: [
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="T01 학습데이터 오염",
+                    description="오염된 데이터로 제어시스템 오동작 유도 위험",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="T13 AI시스템 권한관리 부실",
+                    description="AI가 제어시스템을 임의 조작할 위험",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="⑩ AI시스템 과도한 권한 부여 제한",
+                    description="최소 권한 부여 및 담당자 검토·승인 필요",
+                    source="checklist"
+                ),
+            ],
+            ViolationType.SYSTEM_INFO: [
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="T06 AI모델 추출",
+                    description="AI모델 구조/가중치 등 추출 위험",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="T10 통신구간 공격",
+                    description="패킷 가로채기로 인증키 탈취 위험",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="⑧ AI시스템 경계보안 수행",
+                    description="DMZ·중계서버로 접근 식별·통제 필요",
+                    source="checklist"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="⑨ AI시스템 통신구간 보호",
+                    description="통신구간 암호화 등 보호조치 필요",
+                    source="checklist"
+                ),
+            ],
+            ViolationType.ORGANIZATION: [
+                RegulationReference(
+                    law="개인정보보호법",
+                    article="제15조 (수집·이용)",
+                    description="목적 범위 내 최소 수집 원칙",
+                    source="privacy"
+                ),
+                RegulationReference(
+                    law="개인정보 처리 안내서",
+                    article="데이터 전처리",
+                    description="AI 학습데이터의 개인정보 가명·익명처리 필요",
+                    source="privacy"
+                ),
+            ],
+            ViolationType.LOCATION: [
+                RegulationReference(
+                    law="AI보안 가이드북",
+                    article="M07 보안등급에 맞는 학습데이터 구성·활용",
+                    description="핵심 시설 위치정보는 보안등급에 따라 분류·관리",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="③ 보안등급에 맞는 학습데이터 구성·활용",
+                    description="기밀·민감·공개등급 데이터 분류 활용",
+                    source="checklist"
+                ),
+            ],
+            ViolationType.FINANCIAL: [
+                RegulationReference(
+                    law="개인정보보호법",
+                    article="제34조의2",
+                    description="계좌정보, 신용카드정보 등 노출 방지 의무",
+                    source="privacy"
+                ),
+                RegulationReference(
+                    law="국가정보보안 기본지침",
+                    article="비공개 업무자료 관리",
+                    description="재무·계약 정보의 외부 유출 방지",
+                    source="security"
+                ),
+                RegulationReference(
+                    law="보안성검토 체크리스트",
+                    article="④ 학습데이터 사용자 접근통제",
+                    description="사용자, 그룹, 데이터별 최소 접근권한 부여",
+                    source="checklist"
+                ),
+            ],
+        }
+
+    def _get_regulation_refs(self, violations: List[SecurityViolation]) -> List[RegulationReference]:
+        """위반사항에 해당하는 법규 참조 목록을 반환 (중복 제거)"""
+        seen = set()
+        refs = []
+        for v in violations:
+            for ref in self.regulation_map.get(v.type, []):
+                key = (ref.law, ref.article)
+                if key not in seen:
+                    seen.add(key)
+                    refs.append(ref)
+        return refs
+
     def _find_pattern_violations(self, text: str) -> List[SecurityViolation]:
         """패턴 기반 위반사항 탐지"""
         violations = []
@@ -427,6 +607,9 @@ class KEPCOPromptSecurityValidator:
         # 권장사항
         recommendation = self._generate_recommendation(security_level, all_violations)
 
+        # 법규 참조
+        regulation_refs = self._get_regulation_refs(all_violations)
+
         return ValidationResult(
             is_safe=is_safe,
             security_level=security_level,
@@ -435,7 +618,8 @@ class KEPCOPromptSecurityValidator:
             sanitized_prompt=sanitized,
             original_prompt=prompt,
             timestamp=datetime.now().isoformat(),
-            recommendation=recommendation
+            recommendation=recommendation,
+            regulation_refs=regulation_refs
         )
 
     def save_log(self, result: ValidationResult, filepath: str = "security_log.json"):

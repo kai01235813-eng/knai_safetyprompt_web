@@ -292,7 +292,16 @@ async def validate_prompt(request: ValidateRequest):
             "sanitized_prompt": result.sanitized_prompt,
             "original_prompt": result.original_prompt,
             "timestamp": result.timestamp,
-            "recommendation": result.recommendation
+            "recommendation": result.recommendation,
+            "regulation_refs": [
+                {
+                    "law": r.law,
+                    "article": r.article,
+                    "description": r.description,
+                    "source": r.source
+                }
+                for r in (result.regulation_refs or [])
+            ]
         }
 
         return ValidateResponse(success=True, result=result_dict)

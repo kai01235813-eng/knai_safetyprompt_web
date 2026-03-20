@@ -686,6 +686,63 @@ export default function Home() {
               </div>
             </div>
 
+            {/* 관련 법규 참조 */}
+            {result.regulation_refs && result.regulation_refs.length > 0 && (
+              <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', textAlign: 'center' }}>
+                  📋 관련 법규 및 가이드라인
+                </h3>
+                <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  탐지된 위반사항에 해당하는 법규·보안위협·체크리스트 항목
+                </p>
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {result.regulation_refs.map((ref: any, i: number) => {
+                    const sourceColors: Record<string, { bg: string; border: string; badge: string; badgeText: string }> = {
+                      privacy: { bg: '#eff6ff', border: '#3b82f6', badge: '#3b82f6', badgeText: '개인정보보호' },
+                      security: { bg: '#fefce8', border: '#f59e0b', badge: '#f59e0b', badgeText: 'AI보안' },
+                      checklist: { bg: '#f0fdf4', border: '#22c55e', badge: '#22c55e', badgeText: '체크리스트' },
+                    }
+                    const sc = sourceColors[ref.source] || sourceColors.security
+                    return (
+                      <div key={i} style={{
+                        padding: '12px 16px',
+                        background: sc.bg,
+                        borderLeft: `4px solid ${sc.border}`,
+                        borderRadius: '6px',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            background: sc.badge,
+                            color: 'white',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold',
+                          }}>{sc.badgeText}</span>
+                          <span style={{ fontWeight: 'bold', color: '#1f2937', fontSize: '0.9rem' }}>{ref.law}</span>
+                        </div>
+                        <div style={{ color: '#374151', fontSize: '0.85rem', fontWeight: '600', marginBottom: '2px' }}>
+                          {ref.article}
+                        </div>
+                        <div style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                          {ref.description}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                  <a href="/regulations" style={{
+                    color: '#3b82f6',
+                    fontSize: '0.85rem',
+                    textDecoration: 'underline',
+                  }}>
+                    전체 법규·가이드라인 상세 보기 →
+                  </a>
+                </div>
+              </div>
+            )}
+
             {/* 권장사항 */}
             {result.recommendation && (
               <div style={{ background: '#fffbeb', border: '2px solid #fbbf24', borderRadius: '12px', padding: '1.5rem', textAlign: 'center' }}>
