@@ -296,6 +296,31 @@ export default function Home() {
                   borderRadius: '4px'
                 }}>NEW</span>
               </a>
+              <a
+                href="/regulations"
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.95rem'
+                }}
+              >
+                📋 법규·가이드라인
+                <span style={{
+                  fontSize: '0.7rem',
+                  background: 'rgba(255,255,255,0.3)',
+                  padding: '0.15rem 0.4rem',
+                  borderRadius: '4px'
+                }}>NEW</span>
+              </a>
             </div>
 
             {/* 입력 영역 */}
