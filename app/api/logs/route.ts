@@ -1,30 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const RAILWAY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { getRecentLogs, getLogDetail, getDashboardStats } from '@/lib/audit-logger'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const limit = searchParams.get('limit') || '50'
-    const offset = searchParams.get('offset') || '0'
-    const level = searchParams.get('level') || 'all'
     const view = searchParams.get('view')
 
-    let url: string
     if (view === 'dashboard') {
-      const days = searchParams.get('days') || '30'
-      url = `${RAILWAY_API_URL}/logs/stats/dashboard?days=${days}`
-    } else {
-      url = `${RAILWAY_API_URL}/logs?limit=${limit}&offset=${offset}&level=${level}`
+      const days = Math.min(parseInt(searchParams.get('days') || '30'), 365)
+      const stats = await getDashboardStats(days)
+      return NextResponse.json(stats)
     }
 
-    const response = await fetch(url)
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`)
+    const logId = searchParams.get('id')
+    if (logId) {
+      const detail = await getLogDetail(logId)
+      if (!detail) {
+        return NextResponse.json({ error: '로그를 찾을 수 없습니다' }, { status: 404 })
+      }
+      return NextResponse.json(detail)
     }
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+    const offset = parseInt(searchParams.get('offset') || '0')
+    const level = searchParams.get('level') || 'all'
+    const nickname = searchParams.get('nickname') || undefined
+
+    const logs = await getRecentLogs(limit, offset, level, nickname)
+    return NextResponse.json(logs)
   } catch (error) {
     console.error('Logs fetch error:', error)
     return NextResponse.json(

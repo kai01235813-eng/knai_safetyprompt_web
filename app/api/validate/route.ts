@@ -1,66 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Railway API URL (환경변수에서 가져오기)
-const RAILWAY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { validatePrompt } from '@/lib/validator'
+import { logValidation } from '@/lib/audit-logger'
 
 export async function POST(request: NextRequest) {
-  // 디버깅: 환경변수 확인
-  console.log('RAILWAY_API_URL:', RAILWAY_API_URL)
-
   try {
-    const { prompt } = await request.json()
+    const { prompt, nickname, profileId } = await request.json()
 
     if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json(
-        { error: '유효한 프롬프트를 입력해주세요' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: '유효한 프롬프트를 입력해주세요' }, { status: 400 })
     }
 
-    // 프롬프트 길이 제한 (10MB)
     if (prompt.length > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: '프롬프트가 너무 깁니다 (최대 10MB)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: '프롬프트가 너무 깁니다 (최대 10MB)' }, { status: 400 })
     }
 
-    // Railway FastAPI로 요청
-    const response = await fetch(`${RAILWAY_API_URL}/validate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt }),
-    })
+    const start = performance.now()
+    const result = validatePrompt(prompt)
+    const elapsed = Math.round(performance.now() - start)
 
-    if (!response.ok) {
-      throw new Error(`Railway API error: ${response.status}`)
-    }
+    // 비동기로 감사 로그 저장 (응답 지연 없이)
+    logValidation(prompt, result, {
+      nickname,
+      profileId,
+      inputType: 'text',
+      responseTimeMs: elapsed,
+    }).catch(err => console.error('Log failed:', err))
 
-    const data = await response.json()
-    const result = data.result
-
-    // 응답 반환
-    return NextResponse.json({
-      success: true,
-      ...result,
-    })
-
+    return NextResponse.json({ success: true, ...result })
   } catch (error) {
     console.error('Validation error:', error)
     return NextResponse.json(
-      {
-        error: '검증 중 오류가 발생했습니다',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: '검증 중 오류가 발생했습니다', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
 }
 
-// OPTIONS 요청 처리 (CORS)
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
