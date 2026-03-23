@@ -482,7 +482,7 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                       <tbody>
                         {(() => {
                           const typeWeights: Record<string, number> = {
-                            '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2,
+                            '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.1,
                             '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0,
                           }
                           const types = Array.from(new Set(violations.map((v: any) => v.type))) as string[]
@@ -510,7 +510,7 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                           <td colSpan={4} style={{ padding: '8px 10px', textAlign: 'right', color: '#1e293b' }}>가중 점수 합계</td>
                           <td style={{ padding: '8px 10px', textAlign: 'right', color: '#dc2626', fontSize: '1.1rem' }}>
                             {violations.reduce((sum: number, v: any) => {
-                              const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
+                              const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.1, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
                               return sum + v.severity * (w[v.type] || 1.0)
                             }, 0).toFixed(1)}점
                           </td>
@@ -523,35 +523,47 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                   <div style={{ marginBottom: '16px' }}>
                     <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ background: '#e0e7ff', color: '#3730a3', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75rem' }}>C</span>
-                      위반 건수 페널티
+                      고위험 위반 건수 페널티
                     </div>
                     <div style={{ padding: '10px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem' }}>
-                      <div style={{ color: '#475569' }}>
-                        위반 {violations.length}건 × 2점 = <strong>{violations.length * 2}점</strong>
-                        {violations.length * 2 > 20 && <span style={{ color: '#f59e0b' }}> → 상한 20점 적용</span>}
-                      </div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '4px' }}>
-                        (위반 건수가 많을수록 추가 감점, 최대 20점)
-                      </div>
+                      {(() => {
+                        const highCount = violations.filter((v: any) => v.severity >= 7).length
+                        return (
+                          <>
+                            <div style={{ color: '#475569' }}>
+                              심각도 7 이상 위반 {highCount}건 × 2점 = <strong>{highCount * 2}점</strong>
+                              {highCount * 2 > 20 && <span style={{ color: '#f59e0b' }}> → 상한 20점 적용</span>}
+                            </div>
+                            <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '4px' }}>
+                              (심각도 7 미만의 경미한 위반은 페널티 미적용 - 오탐 방지)
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
 
                   {/* 최종 계산 */}
                   <div style={{ padding: '16px', background: '#1e293b', borderRadius: '8px', color: 'white' }}>
                     <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px' }}>최종 위험도 점수 계산식:</div>
-                    <div style={{ fontSize: '1rem', marginBottom: '6px', fontFamily: 'monospace' }}>
-                      가중 점수({violations.reduce((sum: number, v: any) => {
-                        const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
-                        return sum + v.severity * (w[v.type] || 1.0)
-                      }, 0).toFixed(1)}) + 건수 페널티({Math.min(violations.length * 2, 20)}) = {(violations.reduce((sum: number, v: any) => {
-                        const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
-                        return sum + v.severity * (w[v.type] || 1.0)
-                      }, 0) + Math.min(violations.length * 2, 20)).toFixed(1)}
-                      {riskScore >= 100 && ' → 상한 100 적용'}
-                    </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '8px' }}>
-                      최종: {riskScore} / 100
-                    </div>
+                    {(() => {
+                      const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.1, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
+                      const weightedSum = violations.reduce((sum: number, v: any) => sum + v.severity * (w[v.type] || 1.0), 0)
+                      const highCount = violations.filter((v: any) => v.severity >= 7).length
+                      const penalty = Math.min(highCount * 2, 20)
+                      const raw = weightedSum + penalty
+                      return (
+                        <>
+                          <div style={{ fontSize: '1rem', marginBottom: '6px', fontFamily: 'monospace' }}>
+                            가중 점수({weightedSum.toFixed(1)}) + 건수 페널티({penalty}) = {raw.toFixed(1)}
+                            {riskScore >= 100 && ' → 상한 100 적용'}
+                          </div>
+                          <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '8px' }}>
+                            최종: {riskScore} / 100
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
                 </>
               )}

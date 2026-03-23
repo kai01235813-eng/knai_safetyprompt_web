@@ -57,29 +57,46 @@ interface PatternRule {
 }
 
 const PATTERNS: Record<string, PatternRule> = {
+  // ── 개인정보 (고위험: 즉시 식별 가능한 개인 고유번호) ──
   '주민등록번호': { regex: /\d{6}[-\s]?[1-4]\d{6}/g, type: '개인정보', severity: 10 },
   '외국인등록번호': { regex: /\d{6}[-\s]?[5-8]\d{6}/g, type: '개인정보', severity: 10 },
   '여권번호': { regex: /[A-Z]{1,2}\d{8,9}/g, type: '개인정보', severity: 9 },
   '운전면허번호': { regex: /(?:\d{2}[-\s]?\d{2}[-\s]?\d{6}[-\s]?\d{2})|(?:[가-힣]+\d{2}-\d{6}-\d{2})/g, type: '개인정보', severity: 9 },
   '신용카드번호': { regex: /\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}/g, type: '개인정보', severity: 10 },
-  '계좌번호': { regex: /\d{3,6}[-\s]?\d{2,8}[-\s]?\d{4,}/g, type: '개인정보', severity: 9 },
+  // 계좌번호: 은행명+숫자 조합으로 오탐 감소 (기존: 숫자-숫자면 무조건 잡힘)
+  '계좌번호': { regex: /(?:[가-힣]+은행|[가-힣]+뱅크|IBK|KB|NH|우리|하나|신한|카카오|토스)\s*\d{6,}[-\s]?\d{2,}/g, type: '개인정보', severity: 9 },
+  // 전화번호: 실제 전화번호 형식만 (0XX-XXXX-XXXX), 예시용 000 제외
   '휴대전화번호': { regex: /01[016789][-\s]?\d{3,4}[-\s]?\d{4}/g, type: '개인정보', severity: 7 },
-  '일반전화번호': { regex: /0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{4}/g, type: '개인정보', severity: 6 },
+  '일반전화번호': { regex: /0[2-6][1-9][-\s]?\d{3,4}[-\s]?\d{4}/g, type: '개인정보', severity: 6 },
   '이메일주소': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, type: '개인정보', severity: 7 },
-  'IP주소': { regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, type: '시스템정보', severity: 8 },
+
+  // ── 시스템정보 (실제 시스템 접속정보) ──
+  // IP주소: 사설IP(10.x, 172.16-31.x, 192.168.x)만 위험, 공인IP는 낮은 심각도
+  'IP주소_사설': { regex: /\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b/g, type: '시스템정보', severity: 8 },
   'MAC주소': { regex: /(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}/g, type: '시스템정보', severity: 8 },
-  'URL경로': { regex: /https?:\/\/[^\s]+/g, type: '시스템정보', severity: 6 },
-  '비밀번호패턴': { regex: /(?:password|passwd|pwd|pass)\s*[:=]\s*\S+/gi, type: '시스템정보', severity: 10 },
-  'API키패턴': { regex: /(?:api[_-]?key|apikey|access[_-]?token)\s*[:=]\s*["']?[\w-]+["']?/gi, type: '시스템정보', severity: 10 },
+  // URL: 사내 시스템 URL만 (localhost, 사설IP 포함 URL)
+  'URL_내부시스템': { regex: /https?:\/\/(?:localhost|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)[^\s]*/g, type: '시스템정보', severity: 7 },
+  '비밀번호패턴': { regex: /(?:password|passwd|pwd)\s*[:=]\s*\S+/gi, type: '시스템정보', severity: 10 },
+  'API키패턴': { regex: /(?:api[_-]?key|apikey|access[_-]?token|secret[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_\-]{16,}["']?/gi, type: '시스템정보', severity: 10 },
+
+  // ── 위치정보 (시설물 구체 위치) ──
   '상세주소': { regex: /[가-힣]+[시도]\s+[가-힣]+[구군]\s+[가-힣]+[동읍면]\s+\d+[-\d]*/g, type: '위치정보', severity: 8 },
   '지번주소': { regex: /[가-힣]+[동읍면리]\s+\d+[-\d]*번지/g, type: '위치정보', severity: 7 },
+
+  // ── 재무정보 (구체적 금액) ──
   '구체적금액_억': { regex: /\d{1,}[,\d]*\s*억\s*(?:\d+[,\d]*\s*만\s*)?원/g, type: '재무정보', severity: 7 },
-  '구체적금액_원': { regex: /\d{6,}[,\d]*\s*원/g, type: '재무정보', severity: 6 },
-  '변전소구체위치': { regex: /[가-힣]+\s*\d*호?\s*변전소/g, type: '기술정보', severity: 8 },
+  // 구체적금액_원: 8자리 이상으로 상향 (100만원 이상만, 기존 6자리는 너무 민감)
+  '구체적금액_원': { regex: /\d{8,}[,\d]*\s*원/g, type: '재무정보', severity: 6 },
+
+  // ── 기술정보 (전력 핵심 인프라 구체 위치/사양) ──
+  '변전소구체위치': { regex: /[가-힣]+\s*\d+호?\s*변전소/g, type: '기술정보', severity: 8 },
   '발전소구체위치': { regex: /[가-힣]+\s*(?:화력|원자력|수력)\s*발전소/g, type: '기술정보', severity: 9 },
-  '전력량수치': { regex: /\d+\.?\d*\s*(?:kW|MW|GW|kWh|MWh|GWh)/g, type: '기술정보', severity: 7 },
+  '전력량수치': { regex: /\d+\.?\d*\s*(?:kW|MW|GW|kWh|MWh|GWh)/g, type: '기술정보', severity: 5 },
+
+  // ── 조직정보 (특정인 식별 가능한 조합) ──
   '임직원명': { regex: /[가-힣]{2,4}\s*(?:사장|부사장|전무|상무|이사|부장|차장|과장|대리|주임)/g, type: '조직정보', severity: 8 },
-  '부서명상세': { regex: /(?:본부|실|부|팀|센터)\s*(?:장\s*)?[가-힣]{2,}/g, type: '조직정보', severity: 6 },
+  // 부서명: "XX본부", "XX팀" 등 구체 부서명만 (최소 2자 부서명 + 본부/팀 등)
+  '부서명상세': { regex: /[가-힣]{2,}(?:본부|센터)\s*[가-힣]*(?:팀|부|실)/g, type: '조직정보', severity: 5 },
 }
 
 // ============================================================
@@ -93,28 +110,47 @@ interface KeywordRule {
 }
 
 const KEYWORD_RULES: Record<string, KeywordRule> = {
+  // ── 기밀등급 표시 (문서에 명시적으로 기밀 표시된 경우) ──
   confidential_markers: {
-    keywords: ['대외비', '비밀', '극비', '1급비밀', '2급비밀', '3급비밀', 'CONFIDENTIAL', 'SECRET', 'TOP SECRET', '내부자료', '사내전용', '열람제한', '배포금지'],
+    keywords: ['대외비', '극비', '1급비밀', '2급비밀', '3급비밀', 'CONFIDENTIAL', 'TOP SECRET', '내부자료', '사내전용', '열람제한', '배포금지'],
     type: '기밀정보', severity: 10,
   },
-  power_infrastructure: {
-    keywords: ['SCADA', 'EMS', 'DMS', 'OMS', 'ADMS', '배전자동화', '원격감시', '원격제어', '계통운영', '전력계통', '송배전망', '보호계전', '차단기위치', '개폐기', 'KEPCO-NET', 'KDN시스템'],
+  // ── 전력 인프라: 구체적 시스템 접속/설정 정보만 고위험 ──
+  // SCADA, EMS 등 일반 용어 언급은 낮은 심각도 (공개 기술 용어)
+  power_infrastructure_high: {
+    keywords: ['차단기위치', 'KEPCO-NET', 'KDN시스템', '계통운영서버', '보호계전설정'],
     type: '기술정보', severity: 9,
   },
-  security_systems: {
-    keywords: ['방화벽', 'firewall', 'IPS', 'IDS', 'VPN설정', 'ACL', '접근통제', '인증서버', 'Active Directory', 'LDAP', '백업서버', 'DB서버', '운영서버'],
+  power_infrastructure_low: {
+    keywords: ['배전자동화', '원격감시', '원격제어', '송배전망', '개폐기'],
+    type: '기술정보', severity: 5,
+  },
+  // ── 보안 시스템: 구체적 설정값/접속정보가 포함된 경우만 고위험 ──
+  security_systems_high: {
+    keywords: ['VPN설정', '인증서버', 'Active Directory', 'LDAP'],
     type: '시스템정보', severity: 9,
   },
-  management_info: {
-    keywords: ['입찰정보', '낙찰가', '계약금액', '견적서', '경영전략', '사업계획', '투자계획', '인사평가', '급여', '성과급', '인센티브', '재무제표', '손익계산서', '대차대조표'],
+  security_systems_low: {
+    keywords: ['방화벽', 'firewall', 'IPS', 'IDS', 'ACL', '접근통제'],
+    type: '시스템정보', severity: 4,
+  },
+  // ── 경영 기밀: 구체적 수치/내용이 동반되어야 의미있음 ──
+  management_info_high: {
+    keywords: ['입찰정보', '낙찰가', '계약금액', '견적서', '재무제표', '손익계산서', '대차대조표'],
     type: '기밀정보', severity: 9,
   },
+  management_info_low: {
+    keywords: ['경영전략', '사업계획', '투자계획', '인사평가'],
+    type: '기밀정보', severity: 5,
+  },
+  // ── 고객 개인정보 (DB/명단 수준) ──
   customer_info: {
-    keywords: ['고객명단', '수용가정보', '계약정보', '전력사용량', '요금정보', '미납정보', '고객DB', 'CRM시스템'],
+    keywords: ['고객명단', '수용가정보', '고객DB', 'CRM시스템', '미납정보'],
     type: '개인정보', severity: 10,
   },
+  // ── 시스템 접근 정보 (실제 인증 정보) ──
   access_info: {
-    keywords: ['관리자권한', 'root', 'administrator', '마스터키', '인증키', '암호화키', '토큰', 'session', 'cookie값'],
+    keywords: ['관리자권한', '마스터키', '인증키', '암호화키'],
     type: '시스템정보', severity: 10,
   },
 }
@@ -223,11 +259,13 @@ function findKeywordViolations(text: string): SecurityViolation[] {
 function calculateRiskScore(violations: SecurityViolation[]): number {
   if (violations.length === 0) return 0
   const typeWeights: Record<ViolationType, number> = {
-    '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2,
+    '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.1,
     '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0,
   }
   const weightedScore = violations.reduce((sum, v) => sum + v.severity * (typeWeights[v.type] || 1.0), 0)
-  const countPenalty = Math.min(violations.length * 2, 20)
+  // 고위험(7+) 위반만 건수 페널티 적용 (낮은 심각도 다수 오탐 방지)
+  const highSeverityCount = violations.filter(v => v.severity >= 7).length
+  const countPenalty = Math.min(highSeverityCount * 2, 20)
   return Math.min(Math.floor(weightedScore + countPenalty), 100)
 }
 
