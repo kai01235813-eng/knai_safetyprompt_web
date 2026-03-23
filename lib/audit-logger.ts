@@ -45,6 +45,7 @@ export async function logValidation(
         type: v.type,
         description: v.description,
         severity: v.severity,
+        matched_text: v.matched_text,
       })),
       regulation_refs: result.regulation_refs.map(r => ({
         law: r.law,

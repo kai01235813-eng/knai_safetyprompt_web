@@ -15,7 +15,7 @@ interface LogEntry {
   is_safe: boolean
   violation_count: number
   violation_types: string[]
-  violation_details: Array<{ type: string; description: string; severity: number }>
+  violation_details: Array<{ type: string; description: string; severity: number; matched_text?: string }>
   regulation_refs: Array<{ law: string; article: string; source: string }>
   response_time_ms: number | null
   original_prompt: string | null
@@ -388,14 +388,21 @@ export default function LogsPage() {
 
                             return (
                               <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                                <div style={{ padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold' }}>
-                                      {v.type}
-                                    </span>
-                                    <span style={{ fontSize: '0.82rem', color: '#475569' }}>{v.description}</span>
+                                <div style={{ padding: '10px 12px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: v.matched_text ? '4px' : '0' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                                        {v.type}
+                                      </span>
+                                      <span style={{ fontSize: '0.82rem', color: '#475569' }}>{v.description}</span>
+                                    </div>
+                                    <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>심각도 {v.severity}/10</span>
                                   </div>
-                                  <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>심각도 {v.severity}/10</span>
+                                  {v.matched_text && (
+                                    <code style={{ fontSize: '0.78rem', background: '#fee2e2', padding: '2px 8px', borderRadius: '4px', color: '#991b1b' }}>
+                                      {v.matched_text}
+                                    </code>
+                                  )}
                                 </div>
                                 {matchedRefs.length > 0 && (
                                   <div style={{ padding: '6px 12px', background: '#eff6ff', borderTop: '1px solid #e2e8f0' }}>
