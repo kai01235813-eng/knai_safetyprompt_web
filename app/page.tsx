@@ -631,25 +631,63 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 위반사항 */}
+            {/* 위반사항 + 법규 매핑 */}
             {result.violations && result.violations.length > 0 && (
               <div style={{ background: 'white', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', textAlign: 'center' }}>
                   {'\u{1F6A8}'} 탐지된 위반사항 ({result.violations.length}건)
                 </h3>
                 <div style={{ display: 'grid', gap: '1rem' }}>
-                  {result.violations.map((v: any, i: number) => (
-                    <div key={i} style={{ padding: '1rem', border: '1px solid #fecaca', borderRadius: '8px', background: '#fef2f2' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span style={{ fontWeight: 'bold', color: '#dc2626' }}>{v.type}</span>
-                        <span style={{ fontSize: '0.875rem', color: '#991b1b' }}>심각도: {v.severity}/10</span>
+                  {result.violations.map((v: any, i: number) => {
+                    const matchedRefs = (result.regulation_refs || []).filter((r: any) => {
+                      const typeRegMap: Record<string, string[]> = {
+                        '개인정보': ['개인정보보호법', 'T07', '⑦'],
+                        '기밀정보': ['국가정보보안', 'N2SF', 'T05', '③'],
+                        '기술정보': ['T01', 'T13', '⑩'],
+                        '시스템정보': ['T06', 'T10', '⑧', '⑨'],
+                        '조직정보': ['개인정보보호법', '개인정보 처리'],
+                        '위치정보': ['M07', '③'],
+                        '재무정보': ['제34조', '비공개', '④'],
+                      }
+                      const keywords = typeRegMap[v.type] || []
+                      return keywords.some((kw: string) => r.law?.includes(kw) || r.article?.includes(kw))
+                    })
+                    return (
+                      <div key={i} style={{ border: '1px solid #fecaca', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div style={{ padding: '1rem', background: '#fef2f2' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <span style={{ fontWeight: 'bold', color: '#dc2626' }}>{v.type}</span>
+                            <span style={{ fontSize: '0.875rem', color: '#991b1b' }}>심각도: {v.severity}/10</span>
+                          </div>
+                          <p style={{ color: '#7f1d1d', marginBottom: '0.25rem' }}>{v.description}</p>
+                          <code style={{ fontSize: '0.875rem', background: '#fee2e2', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                            {v.matched_text}
+                          </code>
+                        </div>
+                        {matchedRefs.length > 0 && (
+                          <div style={{ padding: '0.75rem 1rem', background: '#eff6ff', borderTop: '1px solid #fecaca' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 'bold', marginBottom: '0.4rem' }}>
+                              위반 관련 법규/가이드라인:
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              {matchedRefs.slice(0, 3).map((r: any, ri: number) => {
+                                const srcColor: Record<string, string> = { privacy: '#3b82f6', security: '#f59e0b', checklist: '#22c55e' }
+                                return (
+                                  <div key={ri} style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ background: srcColor[r.source] || '#94a3b8', color: 'white', padding: '1px 6px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 'bold', flexShrink: 0 }}>
+                                      {r.source === 'privacy' ? '개인정보' : r.source === 'security' ? 'AI보안' : '체크리스트'}
+                                    </span>
+                                    <span style={{ color: '#1e40af', fontWeight: '600' }}>{r.law}</span>
+                                    <span style={{ color: '#64748b' }}>{r.article}</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <p style={{ color: '#7f1d1d', marginBottom: '0.25rem' }}>{v.description}</p>
-                      <code style={{ fontSize: '0.875rem', background: '#fee2e2', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-                        {v.matched_text}
-                      </code>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}

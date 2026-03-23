@@ -1,5 +1,14 @@
 'use client'
 
+function SectionHeader({ step, title }: { step: number; title: string }) {
+  return (
+    <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span style={{ background: '#3b82f6', color: 'white', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>{step}</span>
+      {title}
+    </h3>
+  )
+}
+
 interface ValidationProcessModalProps {
   isOpen: boolean
   onClose: () => void
@@ -325,30 +334,9 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
             </section>
           )}
 
-          {/* 패턴/키워드 탐지 */}
+          {/* 패턴/키워드 탐지 + 법규 매핑 */}
           <section style={{ marginBottom: '30px' }}>
-            <h3 style={{
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              color: '#1f2937',
-              marginBottom: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span style={{
-                background: '#3b82f6',
-                color: 'white',
-                borderRadius: '50%',
-                width: '28px',
-                height: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.9rem'
-              }}>{extractedText ? (hasLLM ? '3' : '2') : '1'}</span>
-              패턴 및 키워드 탐지
-            </h3>
+            <SectionHeader step={extractedText ? (hasLLM ? 3 : 2) : 1} title="패턴 및 키워드 탐지" />
             <div style={{
               padding: '15px',
               background: violations.length > 0 ? '#fef2f2' : '#f0fdf4',
@@ -365,113 +353,208 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                     ⚠️ 총 {violations.length}건의 위반사항이 탐지되었습니다
                   </div>
                   <div style={{ display: 'grid', gap: '10px' }}>
-                    {violations.map((v: any, i: number) => (
-                      <div key={i} style={{
-                        padding: '10px',
-                        background: 'white',
-                        border: '1px solid #fecaca',
-                        borderRadius: '6px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                          <span style={{ fontWeight: 'bold', color: '#dc2626' }}>
-                            [{v.type}] {v.description}
-                          </span>
-                          <span style={{ fontSize: '0.875rem', color: '#991b1b' }}>
-                            심각도: {v.severity}/10
-                          </span>
+                    {violations.map((v: any, i: number) => {
+                      const regulationRefs = result.regulation_refs || []
+                      const typeRegMap: Record<string, string[]> = {
+                        '개인정보': ['개인정보보호법', 'T07', '⑦'],
+                        '기밀정보': ['국가정보보안', 'N2SF', 'T05', '③'],
+                        '기술정보': ['T01', 'T13', '⑩'],
+                        '시스템정보': ['T06', 'T10', '⑧', '⑨'],
+                        '조직정보': ['개인정보보호법', '개인정보 처리'],
+                        '위치정보': ['M07', '③ 보안등급'],
+                        '재무정보': ['제34조', '비공개', '④'],
+                      }
+                      const keywords = typeRegMap[v.type] || []
+                      const matchedRefs = regulationRefs.filter((r: any) =>
+                        keywords.some((kw: string) => r.law?.includes(kw) || r.article?.includes(kw))
+                      )
+                      const srcColor: Record<string, string> = { privacy: '#3b82f6', security: '#f59e0b', checklist: '#22c55e' }
+                      const srcLabel: Record<string, string> = { privacy: '개인정보보호', security: 'AI보안', checklist: '체크리스트' }
+
+                      return (
+                        <div key={i} style={{ background: 'white', border: '1px solid #fecaca', borderRadius: '6px', overflow: 'hidden' }}>
+                          <div style={{ padding: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                              <span style={{ fontWeight: 'bold', color: '#dc2626' }}>
+                                [{v.type}] {v.description}
+                              </span>
+                              <span style={{ fontSize: '0.875rem', color: '#991b1b' }}>
+                                심각도: {v.severity}/10
+                              </span>
+                            </div>
+                            <code style={{ fontSize: '0.875rem', background: '#fee2e2', padding: '4px 8px', borderRadius: '4px', display: 'inline-block' }}>
+                              {v.matched_text}
+                            </code>
+                          </div>
+                          {matchedRefs.length > 0 && (
+                            <div style={{ padding: '8px 10px', background: '#eff6ff', borderTop: '1px solid #e2e8f0' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#1e40af', fontWeight: 'bold', marginBottom: '4px' }}>위반 법규:</div>
+                              {matchedRefs.slice(0, 3).map((r: any, ri: number) => (
+                                <div key={ri} style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                                  <span style={{ background: srcColor[r.source] || '#94a3b8', color: 'white', padding: '1px 5px', borderRadius: '3px', fontSize: '0.63rem', fontWeight: 'bold' }}>
+                                    {srcLabel[r.source] || r.source}
+                                  </span>
+                                  <span style={{ color: '#1e40af', fontWeight: '600' }}>{r.law}</span>
+                                  <span style={{ color: '#64748b' }}>{r.article}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <code style={{
-                          fontSize: '0.875rem',
-                          background: '#fee2e2',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          display: 'inline-block'
-                        }}>
-                          {v.matched_text}
-                        </code>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </>
               )}
             </div>
           </section>
 
-          {/* 위험도 점수 계산 */}
+          {/* 위험도 점수 상세 계산 */}
           <section style={{ marginBottom: '30px' }}>
-            <h3 style={{
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              color: '#1f2937',
-              marginBottom: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span style={{
-                background: '#3b82f6',
-                color: 'white',
-                borderRadius: '50%',
-                width: '28px',
-                height: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.9rem'
-              }}>{extractedText ? (hasLLM ? '4' : '3') : '2'}</span>
-              위험도 점수 계산
-            </h3>
-            <div style={{
-              padding: '15px',
-              background: '#f9fafb',
-              border: '2px solid #d1d5db',
-              borderRadius: '8px'
-            }}>
-              <div style={{ marginBottom: '15px' }}>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
-                  기본 점수 (각 위반의 심각도 합계):
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#1f2937' }}>
-                  {violations.reduce((sum: number, v: any) => sum + v.severity, 0)}점
-                </div>
-              </div>
+            <SectionHeader step={extractedText ? (hasLLM ? 4 : 3) : 2} title="위험도 점수 상세 계산" />
+            <div style={{ padding: '15px', background: '#f9fafb', border: '2px solid #d1d5db', borderRadius: '8px' }}>
 
-              {violations.length > 0 && (
+              {violations.length === 0 ? (
+                <div style={{ color: '#166534', fontWeight: 'bold', textAlign: 'center', padding: '20px' }}>
+                  위반사항 없음 → 위험도 0점
+                </div>
+              ) : (
                 <>
-                  <div style={{ marginBottom: '15px' }}>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
-                      유형별 가중치 적용:
+                  {/* STEP A: 항목별 심각도 */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ background: '#e0e7ff', color: '#3730a3', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75rem' }}>A</span>
+                      항목별 기본 심각도
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
-                      {Array.from(new Set(violations.map((v: any) => v.type))).map((type: any) => (
-                        <div key={type}>• {type}</div>
-                      ))}
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ background: '#e2e8f0' }}>
+                          <th style={{ padding: '6px 10px', textAlign: 'left', color: '#475569' }}>#</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'left', color: '#475569' }}>유형</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'left', color: '#475569' }}>탐지 내용</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'left', color: '#475569' }}>매칭 텍스트</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>심각도</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {violations.map((v: any, i: number) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '6px 10px', color: '#94a3b8' }}>{i + 1}</td>
+                            <td style={{ padding: '6px 10px' }}>
+                              <span style={{ background: '#fee2e2', color: '#991b1b', padding: '1px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>{v.type}</span>
+                            </td>
+                            <td style={{ padding: '6px 10px', color: '#475569' }}>{v.description}</td>
+                            <td style={{ padding: '6px 10px' }}>
+                              <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '3px', fontSize: '0.78rem' }}>{v.matched_text}</code>
+                            </td>
+                            <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 'bold', color: '#dc2626' }}>{v.severity}</td>
+                          </tr>
+                        ))}
+                        <tr style={{ background: '#f1f5f9', fontWeight: 'bold' }}>
+                          <td colSpan={4} style={{ padding: '8px 10px', textAlign: 'right', color: '#1e293b' }}>기본 심각도 합계</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#dc2626', fontSize: '1.1rem' }}>
+                            {violations.reduce((sum: number, v: any) => sum + v.severity, 0)}점
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* STEP B: 유형별 가중치 */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ background: '#e0e7ff', color: '#3730a3', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75rem' }}>B</span>
+                      유형별 가중치 적용
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#6b7280', marginBottom: '8px' }}>
+                      각 위반의 심각도에 유형별 가중치를 곱하여 가중 점수를 계산합니다.
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ background: '#e2e8f0' }}>
+                          <th style={{ padding: '6px 10px', textAlign: 'left', color: '#475569' }}>유형</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>가중치</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>건수</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>심각도 합</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>가중 점수</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const typeWeights: Record<string, number> = {
+                            '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2,
+                            '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0,
+                          }
+                          const types = Array.from(new Set(violations.map((v: any) => v.type))) as string[]
+                          let totalWeighted = 0
+                          return types.map((type) => {
+                            const typeViolations = violations.filter((v: any) => v.type === type)
+                            const severitySum = typeViolations.reduce((s: number, v: any) => s + v.severity, 0)
+                            const weight = typeWeights[type] || 1.0
+                            const weighted = severitySum * weight
+                            totalWeighted += weighted
+                            return (
+                              <tr key={type} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                <td style={{ padding: '6px 10px' }}>
+                                  <span style={{ background: '#fee2e2', color: '#991b1b', padding: '1px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>{type}</span>
+                                </td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', color: '#6b7280' }}>×{weight}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>{typeViolations.length}건</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', color: '#475569' }}>{severitySum}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 'bold', color: '#dc2626' }}>{weighted.toFixed(1)}</td>
+                              </tr>
+                            )
+                          })
+                        })()}
+                        <tr style={{ background: '#f1f5f9', fontWeight: 'bold' }}>
+                          <td colSpan={4} style={{ padding: '8px 10px', textAlign: 'right', color: '#1e293b' }}>가중 점수 합계</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#dc2626', fontSize: '1.1rem' }}>
+                            {violations.reduce((sum: number, v: any) => {
+                              const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
+                              return sum + v.severity * (w[v.type] || 1.0)
+                            }, 0).toFixed(1)}점
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* STEP C: 건수 페널티 */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ background: '#e0e7ff', color: '#3730a3', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75rem' }}>C</span>
+                      위반 건수 페널티
+                    </div>
+                    <div style={{ padding: '10px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem' }}>
+                      <div style={{ color: '#475569' }}>
+                        위반 {violations.length}건 × 2점 = <strong>{violations.length * 2}점</strong>
+                        {violations.length * 2 > 20 && <span style={{ color: '#f59e0b' }}> → 상한 20점 적용</span>}
+                      </div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '4px' }}>
+                        (위반 건수가 많을수록 추가 감점, 최대 20점)
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '15px' }}>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
-                      위반 건수 페널티:
+                  {/* 최종 계산 */}
+                  <div style={{ padding: '16px', background: '#1e293b', borderRadius: '8px', color: 'white' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px' }}>최종 위험도 점수 계산식:</div>
+                    <div style={{ fontSize: '1rem', marginBottom: '6px', fontFamily: 'monospace' }}>
+                      가중 점수({violations.reduce((sum: number, v: any) => {
+                        const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
+                        return sum + v.severity * (w[v.type] || 1.0)
+                      }, 0).toFixed(1)}) + 건수 페널티({Math.min(violations.length * 2, 20)}) = {(violations.reduce((sum: number, v: any) => {
+                        const w: Record<string, number> = { '개인정보': 1.5, '기밀정보': 1.4, '시스템정보': 1.3, '기술정보': 1.2, '재무정보': 1.1, '조직정보': 1.0, '위치정보': 1.0 }
+                        return sum + v.severity * (w[v.type] || 1.0)
+                      }, 0) + Math.min(violations.length * 2, 20)).toFixed(1)}
+                      {riskScore >= 100 && ' → 상한 100 적용'}
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
-                      {violations.length}건 × 2 = {Math.min(violations.length * 2, 20)}점
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '8px' }}>
+                      최종: {riskScore} / 100
                     </div>
                   </div>
                 </>
               )}
-
-              <div style={{
-                paddingTop: '15px',
-                borderTop: '2px solid #d1d5db',
-                marginTop: '15px'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '5px' }}>
-                  최종 위험도 점수:
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937' }}>
-                  {riskScore} / 100
-                </div>
-              </div>
             </div>
           </section>
 
