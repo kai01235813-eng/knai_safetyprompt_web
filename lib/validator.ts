@@ -71,8 +71,8 @@ const PATTERNS: Record<string, PatternRule> = {
   '이메일주소': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, type: '개인정보', severity: 7 },
 
   // ── 시스템정보 (실제 시스템 접속정보) ──
-  // IP주소: 사설IP(10.x, 172.16-31.x, 192.168.x)만 위험, 공인IP는 낮은 심각도
-  'IP주소_사설': { regex: /\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b/g, type: '시스템정보', severity: 8 },
+  // IP주소: 모든 X.X.X.X 형태 탐지 (내부든 외부든 IP 노출 자체가 위험)
+  'IP주소': { regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, type: '시스템정보', severity: 8 },
   'MAC주소': { regex: /(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}/g, type: '시스템정보', severity: 8 },
   // URL: 사내 시스템 URL만 (localhost, 사설IP 포함 URL)
   'URL_내부시스템': { regex: /https?:\/\/(?:localhost|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)[^\s]*/g, type: '시스템정보', severity: 7 },
