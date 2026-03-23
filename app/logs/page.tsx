@@ -352,68 +352,84 @@ export default function LogsPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                      {/* 기본 정보 */}
-                      <div>
-                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>기본 정보</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem' }}>
-                          <InfoRow label="전체 ID" value={log.id} mono />
-                          <InfoRow label="시각" value={formatTimeFull(log.created_at)} />
-                          <InfoRow label="사용자" value={log.nickname || '비로그인'} />
-                          <InfoRow label="입력 유형" value={log.input_type} />
-                          <InfoRow label="보안 등급" value={`${log.security_level} (위험점수: ${log.risk_score})`} />
-                          <InfoRow label="프롬프트 해시" value={log.prompt_hash} mono />
-                          <InfoRow label="프롬프트 길이" value={`${log.prompt_length}자`} />
-                          <InfoRow label="응답 시간" value={log.response_time_ms ? `${log.response_time_ms}ms` : '-'} />
-                        </div>
-                        {log.recommendation && (
-                          <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', fontSize: '0.8rem', color: '#92400e' }}>
-                            <strong>권장사항:</strong> {log.recommendation}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 위반 상세 */}
-                      <div>
-                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>위반 상세 ({log.violation_count}건)</h4>
-                        {(log.violation_details || []).length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {log.violation_details.map((v, i) => (
-                              <div key={i} style={{
-                                background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', fontSize: '0.82rem',
-                              }}>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2px' }}>
-                                  <span style={{ background: '#fee2e2', color: '#991b1b', padding: '1px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold' }}>
-                                    {v.type}
-                                  </span>
-                                  <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>심각도 {v.severity}/10</span>
-                                </div>
-                                <div style={{ color: '#475569' }}>{v.description}</div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>위반 사항 없음</div>
-                        )}
-                      </div>
-
-                      {/* 관련 법규 */}
-                      <div>
-                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>관련 법규</h4>
-                        {(log.regulation_refs || []).length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            {log.regulation_refs.map((r, i) => (
-                              <div key={i} style={{ fontSize: '0.8rem', color: '#475569', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 10px' }}>
-                                <span style={{ fontWeight: 'bold', color: '#1e40af' }}>{r.law}</span>
-                                <span style={{ color: '#64748b' }}> {r.article}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>해당 없음</div>
-                        )}
-                      </div>
+                    {/* 기본 정보 */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', marginBottom: '16px', padding: '12px', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.82rem' }}>
+                      <InfoRow label="전체 ID" value={log.id} mono />
+                      <InfoRow label="시각" value={formatTimeFull(log.created_at)} />
+                      <InfoRow label="사용자" value={log.nickname || '비로그인'} />
+                      <InfoRow label="보안 등급" value={`${log.security_level} (위험점수: ${log.risk_score})`} />
+                      <InfoRow label="프롬프트 길이" value={`${log.prompt_length}자`} />
+                      <InfoRow label="응답 시간" value={log.response_time_ms ? `${log.response_time_ms}ms` : '-'} />
                     </div>
+
+                    {/* 위반 탐지 상세 (검증과정 분석 스타일) */}
+                    {(log.violation_details || []).length > 0 ? (
+                      <div style={{ marginBottom: '16px' }}>
+                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>
+                          탐지된 위반사항 ({log.violation_count}건) - 위험점수 {log.risk_score}/100
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {log.violation_details.map((v, i) => {
+                            const typeRegMap: Record<string, string[]> = {
+                              '개인정보': ['개인정보보호법', 'T07', '⑦'],
+                              '기밀정보': ['국가정보보안', 'N2SF', 'T05', '③'],
+                              '기술정보': ['T01', 'T13', '⑩'],
+                              '시스템정보': ['T06', 'T10', '⑧', '⑨'],
+                              '조직정보': ['개인정보보호법', '개인정보 처리'],
+                              '위치정보': ['M07', '③ 보안등급'],
+                              '재무정보': ['제34조', '비공개', '④'],
+                            }
+                            const keywords = typeRegMap[v.type] || []
+                            const matchedRefs = (log.regulation_refs || []).filter((r: any) =>
+                              keywords.some((kw: string) => r.law?.includes(kw) || r.article?.includes(kw))
+                            )
+                            const srcColor: Record<string, string> = { privacy: '#3b82f6', security: '#f59e0b', checklist: '#22c55e' }
+                            const srcLabel: Record<string, string> = { privacy: '개인정보보호', security: 'AI보안', checklist: '체크리스트' }
+
+                            return (
+                              <div key={i} style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                                <div style={{ padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                                      {v.type}
+                                    </span>
+                                    <span style={{ fontSize: '0.82rem', color: '#475569' }}>{v.description}</span>
+                                  </div>
+                                  <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>심각도 {v.severity}/10</span>
+                                </div>
+                                {matchedRefs.length > 0 && (
+                                  <div style={{ padding: '6px 12px', background: '#eff6ff', borderTop: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                      {matchedRefs.slice(0, 3).map((r: any, ri: number) => (
+                                        <span key={ri} style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                          <span style={{ background: srcColor[r.source] || '#94a3b8', color: 'white', padding: '1px 5px', borderRadius: '3px', fontSize: '0.63rem', fontWeight: 'bold' }}>
+                                            {srcLabel[r.source] || r.source}
+                                          </span>
+                                          <span style={{ color: '#1e40af', fontWeight: '600' }}>{r.law}</span>
+                                          <span style={{ color: '#64748b' }}>{r.article}</span>
+                                          {ri < matchedRefs.slice(0, 3).length - 1 && <span style={{ color: '#cbd5e1' }}>│</span>}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ padding: '16px', background: '#f0fdf4', borderRadius: '8px', textAlign: 'center', color: '#16a34a', fontWeight: 'bold', marginBottom: '16px' }}>
+                        위반사항 없음 - 안전한 프롬프트
+                      </div>
+                    )}
+
+                    {/* 권장사항 */}
+                    {log.recommendation && (
+                      <div style={{ padding: '10px 12px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.82rem', color: '#92400e' }}>
+                        <strong>권장사항:</strong> <span style={{ whiteSpace: 'pre-line' }}>{log.recommendation}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
