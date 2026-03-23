@@ -23,6 +23,8 @@ export default function Home() {
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false)
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
   const [isIntroExpanded, setIsIntroExpanded] = useState(false)
+  const [ocrText, setOcrText] = useState('')
+  const [ocrStatus, setOcrStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
 
   // 인증 상태
   const [user, setUser] = useState<UserSession | null>(null)
@@ -89,25 +91,51 @@ export default function Home() {
     setResult(null)
 
     try {
-      let response: Response
+      let textToValidate = prompt
 
+      // 이미지 모드: 로컬 OCR 서버에서 텍스트 추출 후 검증
       if (inputType === 'image' && imageFile) {
-        const formData = new FormData()
-        formData.append('image', imageFile)
-        if (user?.nickname) formData.append('nickname', user.nickname)
-        if (user?.profileId) formData.append('profileId', user.profileId)
-        response = await fetch('/api/validate-image', { method: 'POST', body: formData })
-      } else {
-        response = await fetch('/api/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt,
-            nickname: user?.nickname,
-            profileId: user?.profileId,
-          }),
-        })
+        setOcrStatus('loading')
+        setOcrText('')
+
+        const ocrForm = new FormData()
+        ocrForm.append('image', imageFile)
+
+        let ocrRes: Response
+        try {
+          ocrRes = await fetch('http://localhost:8100/ocr', { method: 'POST', body: ocrForm })
+        } catch {
+          setOcrStatus('error')
+          throw new Error('OCR 서버에 연결할 수 없습니다. ocr-server가 실행 중인지 확인해주세요. (start.bat 실행)')
+        }
+
+        if (!ocrRes.ok) {
+          setOcrStatus('error')
+          const errData = await ocrRes.json().catch(() => ({}))
+          throw new Error(errData.error || 'OCR 처리 실패')
+        }
+
+        const ocrData = await ocrRes.json()
+        if (!ocrData.extracted_text || ocrData.extracted_text.trim().length === 0) {
+          setOcrStatus('error')
+          throw new Error('이미지에서 텍스트를 추출하지 못했습니다. 텍스트가 포함된 이미지를 업로드해주세요.')
+        }
+
+        textToValidate = ocrData.extracted_text
+        setOcrText(textToValidate)
+        setOcrStatus('done')
       }
+
+      // 텍스트 보안 검증
+      const response = await fetch('/api/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: textToValidate,
+          nickname: user?.nickname,
+          profileId: user?.profileId,
+        }),
+      })
 
       if (!response.ok) {
         let errorMessage = '검증 요청 실패'
@@ -123,6 +151,9 @@ export default function Home() {
         data = await response.json()
       } catch {
         throw new Error('서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.')
+      }
+      if (inputType === 'image') {
+        data.ocr_extracted_text = textToValidate
       }
       setResult(data)
     } catch (err: any) {
@@ -400,12 +431,41 @@ export default function Home() {
             ) : (
               <div>
                 <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151', textAlign: 'center' }}>
-                  이미지 파일을 업로드하세요 (텍스트/이미지)
+                  이미지 파일을 업로드하세요 (OCR로 텍스트 추출 후 보안 검증)
                 </label>
                 <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '3rem', textAlign: 'center', background: '#f9fafb' }}>
-                  <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} style={{ marginBottom: '1rem' }} />
+                  <input type="file" accept="image/*" onChange={(e) => { setImageFile(e.target.files?.[0] || null); setOcrStatus('idle'); setOcrText('') }} style={{ marginBottom: '1rem' }} />
                   <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>PNG, JPG, JPEG 파일을 업로드하세요</p>
+                  <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                    사내 OCR 서버(EasyOCR)로 처리 - 외부 전송 없음
+                  </p>
                 </div>
+                <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1rem' }}>ℹ️</span>
+                  <span>
+                    이미지 OCR은 관리자 PC의 사내 서버에서 처리됩니다. 서버 미작동 시 <strong>경남본부 AI혁신팀</strong>으로 문의해주세요.
+                  </span>
+                </div>
+                {ocrStatus === 'loading' && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', textAlign: 'center', color: '#1e40af', fontSize: '0.9rem' }}>
+                    OCR 텍스트 추출 중... (이미지 크기에 따라 수초 소요)
+                  </div>
+                )}
+                {ocrStatus === 'done' && ocrText && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#15803d', marginBottom: '0.5rem' }}>
+                      추출된 텍스트 ({ocrText.length}자)
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#374151', whiteSpace: 'pre-wrap', maxHeight: '150px', overflowY: 'auto', background: 'white', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
+                      {ocrText}
+                    </div>
+                  </div>
+                )}
+                {ocrStatus === 'error' && (
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', textAlign: 'center', color: '#991b1b', fontSize: '0.85rem' }}>
+                    OCR 서버 연결 실패 - start.bat을 실행해주세요
+                  </div>
+                )}
               </div>
             )}
 
