@@ -443,7 +443,7 @@ export default function Home() {
                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '1rem' }}>ℹ️</span>
                   <span>
-                    이미지 OCR은 사내 서버에서 처리됩니다 (외부 전송 없음). 사내망(<strong>http://10.193.5.142:3000</strong>)에서 접속해야 이용 가능합니다. 문의: <strong>경남본부 AI혁신팀</strong>
+                    이미지 OCR은 사내 서버에서 처리됩니다 (외부 전송 없음). 사내망에서 접속해야 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
                   </span>
                 </div>
                 {ocrStatus === 'loading' && (
@@ -463,7 +463,7 @@ export default function Home() {
                 )}
                 {ocrStatus === 'error' && (
                   <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', textAlign: 'center', color: '#991b1b', fontSize: '0.85rem' }}>
-                    OCR 서버 연결 실패 - 사내망(http://10.193.5.142:3000)에서 접속하거나 AI혁신팀에 문의해주세요
+                    OCR 서버 연결 실패 - 사내망에서 접속하거나 경남본부 AI혁신팀에 문의해주세요
                   </div>
                 )}
               </div>
