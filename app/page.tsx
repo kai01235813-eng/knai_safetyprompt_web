@@ -326,6 +326,31 @@ export default function Home() {
         </div>
       </header>
 
+      {/* 퀵 네비게이션 */}
+      <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '0.5rem 0' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {([
+            { href: '/rag-safety', label: 'RAG 활용가이드', color: '#10b981', icon: '\u{1F4C4}', isNew: true },
+            { href: '/regulations', label: '법규 가이드라인', color: '#f59e0b', icon: '\u{1F4CB}', isNew: true },
+            { href: '/logs', label: '검증 이력', color: '#3b82f6', icon: '\u{1F4CA}', isNew: false },
+          ] as const).map(item => (
+            <a key={item.href} href={item.href} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 1rem',
+              background: `${item.color}10`, color: item.color, borderRadius: '20px',
+              textDecoration: 'none', fontSize: '0.82rem', fontWeight: '600',
+              border: `1px solid ${item.color}30`, transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = item.color; e.currentTarget.style.color = 'white' }}
+              onMouseLeave={e => { e.currentTarget.style.background = `${item.color}10`; e.currentTarget.style.color = item.color }}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+              {item.isNew && <span style={{ fontSize: '0.6rem', background: item.color, color: 'white', padding: '1px 5px', borderRadius: '4px' }}>NEW</span>}
+            </a>
+          ))}
+        </div>
+      </nav>
+
       {/* 메인 */}
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <div style={{ marginBottom: '2rem' }}>
@@ -514,67 +539,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 참고자료 섹션 */}
-        {!result && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-            <a href="/rag-safety" style={{
-              display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: 'white', borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textDecoration: 'none', border: '2px solid transparent',
-              transition: 'border-color 0.2s',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#10b981')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
-            >
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
-                {'\u{1F4C4}'}
-              </div>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '1rem', marginBottom: '0.2rem' }}>
-                  RAG 활용가이드
-                  <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>NEW</span>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>생성형AI 안전 활용을 위한 RAG 기반 가이드</div>
-              </div>
-            </a>
-
-            <a href="/regulations" style={{
-              display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: 'white', borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textDecoration: 'none', border: '2px solid transparent',
-              transition: 'border-color 0.2s',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#f59e0b')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
-            >
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
-                {'\u{1F4CB}'}
-              </div>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '1rem', marginBottom: '0.2rem' }}>
-                  법규 가이드라인
-                  <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', background: '#f59e0b', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>NEW</span>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>AI 보안 관련 법규 및 체크리스트 안내</div>
-              </div>
-            </a>
-
-            <a href="/logs" style={{
-              display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: 'white', borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textDecoration: 'none', border: '2px solid transparent',
-              transition: 'border-color 0.2s',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3b82f6')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
-            >
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
-                {'\u{1F4CA}'}
-              </div>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '1rem', marginBottom: '0.2rem' }}>검증 이력 대시보드</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>검증 통계 및 이력 조회</div>
-              </div>
-            </a>
-          </div>
-        )}
+        {/* 참고자료 섹션은 헤더 아래 네비게이션 바로 이동됨 */}
 
         {/* 검증 결과 */}
         {result && (
