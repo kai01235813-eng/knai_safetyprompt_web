@@ -28,6 +28,7 @@ export interface RegulationReference {
 
 export interface SecurityViolation {
   type: ViolationType
+  pattern_name: string
   description: string
   matched_text: string
   position: [number, number]
@@ -236,6 +237,7 @@ function findPatternViolations(text: string): SecurityViolation[] {
     while ((match = rule.regex.exec(text)) !== null) {
       violations.push({
         type: rule.type,
+        pattern_name: patternName,
         description: `${patternName} 탐지`,
         matched_text: match[0],
         position: [match.index, match.index + match[0].length],
@@ -258,6 +260,7 @@ function findKeywordViolations(text: string): SecurityViolation[] {
         if (idx === -1) break
         violations.push({
           type: rule.type,
+          pattern_name: keyword,
           description: `${ruleName}: '${keyword}' 키워드 발견`,
           matched_text: text.slice(idx, idx + keyword.length),
           position: [idx, idx + keyword.length],
@@ -292,10 +295,39 @@ function determineSecurityLevel(riskScore: number): SecurityLevel {
 
 function sanitizePrompt(text: string, violations: SecurityViolation[]): string {
   let sanitized = text
+  // 위치 겹침 제거 (같은 영역을 여러 패턴이 잡은 경우 가장 구체적인 것만)
   const sorted = [...violations].sort((a, b) => b.position[0] - a.position[0])
+  const used = new Set<string>()
   for (const v of sorted) {
     const [start, end] = v.position
-    sanitized = sanitized.slice(0, start) + '***' + sanitized.slice(end)
+    const posKey = `${start}-${end}`
+    if (used.has(posKey)) continue
+    used.add(posKey)
+
+    // 유형별 태그로 마스킹 (AI가 맥락을 이해할 수 있도록)
+    const tagMap: Record<string, string> = {
+      '주민등록번호': '[주민등록번호]', '주민번호유사패턴': '[주민등록번호]',
+      '외국인등록번호': '[외국인등록번호]', '여권번호': '[여권번호]',
+      '운전면허번호': '[운전면허번호]', '신용카드번호': '[카드번호]',
+      '계좌번호': '[계좌번호]', '휴대전화번호': '[전화번호]',
+      '일반전화번호': '[전화번호]', '이메일주소': '[이메일]',
+      '개인이름': '[이름]', 'IP주소': '[IP주소]',
+      'MAC주소': '[MAC주소]', 'URL_내부시스템': '[내부URL]',
+      '비밀번호패턴': '[비밀번호]', 'API키패턴': '[API키]',
+      '상세주소': '[주소]', '지번주소': '[주소]',
+      '변전소명': '[변전소명]', '발전소명': '[발전소명]',
+      '전력시설물명': '[시설물명]', '전력량수치': '[전력량]',
+      '구체적금액_억': '[금액]', '구체적금액_원': '[금액]',
+      '직원식별': '[직원명]', '부서명': '[부서명]',
+    }
+    const tag = tagMap[v.pattern_name] || `[${v.type}]`
+
+    sanitized = sanitized.slice(0, start) + tag + sanitized.slice(end)
+  }
+
+  // AI 활용 안내 문구 추가
+  if (violations.length > 0) {
+    sanitized += '\n\n※ 본 프롬프트는 보안 검증 시스템에 의해 민감정보가 [유형태그]로 마스킹 처리되었습니다. 마스킹된 부분을 제외하고 요청 내용에 맞게 답변해주세요.'
   }
   return sanitized
 }
