@@ -4,17 +4,19 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
 interface LogEntry {
-  id: number
-  timestamp: string
+  id: string
+  created_at: string
+  nickname: string | null
   input_type: string
   prompt_hash: string
   prompt_length: number
   security_level: string
   risk_score: number
-  is_safe: number
+  is_safe: boolean
   violation_count: number
-  violation_types: string
-  client_ip: string | null
+  violation_types: string[]
+  violation_details: Array<{ type: string; description: string; severity: number }>
+  regulation_refs: Array<{ law: string; article: string; source: string }>
   response_time_ms: number | null
 }
 
@@ -39,7 +41,6 @@ interface DashboardStats {
     blocked_count: number
     avg_risk_score: number
   }>
-  hourly_distribution: Array<{ hour: number; cnt: number }>
 }
 
 type TabId = 'dashboard' | 'logs'
@@ -53,6 +54,7 @@ export default function LogsPage() {
   const [levelFilter, setLevelFilter] = useState('all')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [expandedLog, setExpandedLog] = useState<string | null>(null)
 
   const PAGE_SIZE = 20
 
@@ -257,20 +259,34 @@ export default function LogsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                      {['ID', '시각', '유형', '등급', '위험점수', '위반', '길이', '응답(ms)'].map(h => (
+                      {['ID', '시각', '사용자', '유형', '등급', '위험점수', '위반', '위반유형', '길이', '응답(ms)'].map(h => (
                         <th key={h} style={{ padding: '10px 12px', textAlign: 'left', color: '#475569', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {logs.length === 0 ? (
-                      <tr><td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>검증 이력이 없습니다</td></tr>
+                      <tr><td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>검증 이력이 없습니다</td></tr>
                     ) : logs.map(log => {
                       const lc = levelColors[log.security_level] || { bg: '#f1f5f9', text: '#475569', dot: '#94a3b8' }
+                      const isExpanded = expandedLog === log.id
                       return (
-                        <tr key={log.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '10px 12px', color: '#94a3b8' }}>#{log.id}</td>
-                          <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#475569' }}>{formatTime(log.timestamp)}</td>
+                        <tr key={log.id} onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                          style={{ borderBottom: isExpanded ? 'none' : '1px solid #f1f5f9', cursor: 'pointer', background: isExpanded ? '#f8fafc' : 'transparent' }}
+                          onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = '#fafbfc' }}
+                          onMouseLeave={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                        >
+                          <td style={{ padding: '10px 12px', color: '#64748b', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            #{log.id.slice(0, 8)}
+                          </td>
+                          <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#475569' }}>
+                            {formatTime(log.created_at)}
+                          </td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <span style={{ fontWeight: '600', color: '#1e40af' }}>
+                              {log.nickname || '비로그인'}
+                            </span>
+                          </td>
                           <td style={{ padding: '10px 12px' }}>
                             <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem' }}>
                               {log.input_type === 'image' ? '🖼 이미지' : '📝 텍스트'}
@@ -287,8 +303,14 @@ export default function LogsPage() {
                               {log.risk_score}
                             </span>
                           </td>
-                          <td style={{ padding: '10px 12px', color: log.violation_count > 0 ? '#ef4444' : '#94a3b8' }}>
+                          <td style={{ padding: '10px 12px', color: log.violation_count > 0 ? '#ef4444' : '#94a3b8', fontWeight: log.violation_count > 0 ? 'bold' : 'normal' }}>
                             {log.violation_count}건
+                          </td>
+                          <td style={{ padding: '10px 12px', color: '#64748b', fontSize: '0.78rem' }}>
+                            {(log.violation_types || []).length > 0
+                              ? log.violation_types.join(', ')
+                              : '-'
+                            }
                           </td>
                           <td style={{ padding: '10px 12px', color: '#94a3b8' }}>{log.prompt_length}</td>
                           <td style={{ padding: '10px 12px', color: '#94a3b8' }}>{log.response_time_ms ?? '-'}</td>
@@ -297,6 +319,70 @@ export default function LogsPage() {
                     })}
                   </tbody>
                 </table>
+
+                {/* 확장된 로그 상세 */}
+                {expandedLog && logs.filter(l => l.id === expandedLog).map(log => (
+                  <div key={`detail-${log.id}`} style={{
+                    padding: '16px 24px', background: '#f8fafc', borderTop: '1px dashed #e2e8f0', borderBottom: '1px solid #e2e8f0',
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                      {/* 기본 정보 */}
+                      <div>
+                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>기본 정보</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem' }}>
+                          <InfoRow label="전체 ID" value={log.id} mono />
+                          <InfoRow label="시각" value={formatTimeFull(log.created_at)} />
+                          <InfoRow label="사용자" value={log.nickname || '비로그인'} />
+                          <InfoRow label="입력 유형" value={log.input_type} />
+                          <InfoRow label="프롬프트 해시" value={log.prompt_hash} mono />
+                          <InfoRow label="프롬프트 길이" value={`${log.prompt_length}자`} />
+                          <InfoRow label="응답 시간" value={log.response_time_ms ? `${log.response_time_ms}ms` : '-'} />
+                        </div>
+                      </div>
+
+                      {/* 위반 상세 */}
+                      <div>
+                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>위반 상세 ({log.violation_count}건)</h4>
+                        {(log.violation_details || []).length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {log.violation_details.map((v, i) => (
+                              <div key={i} style={{
+                                background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', fontSize: '0.82rem',
+                              }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2px' }}>
+                                  <span style={{ background: '#fee2e2', color: '#991b1b', padding: '1px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                                    {v.type}
+                                  </span>
+                                  <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>심각도 {v.severity}/10</span>
+                                </div>
+                                <div style={{ color: '#475569' }}>{v.description}</div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>위반 사항 없음</div>
+                        )}
+                      </div>
+
+                      {/* 관련 법규 */}
+                      <div>
+                        <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>관련 법규</h4>
+                        {(log.regulation_refs || []).length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {log.regulation_refs.map((r, i) => (
+                              <div key={i} style={{ fontSize: '0.8rem', color: '#475569', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 10px' }}>
+                                <span style={{ fontWeight: 'bold', color: '#1e40af' }}>{r.law}</span>
+                                <span style={{ color: '#64748b' }}> {r.article}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>해당 없음</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* 페이지네이션 */}
@@ -332,11 +418,37 @@ function StatCard({ label, value, color, suffix = '' }: { label: string; value: 
   )
 }
 
+function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <span style={{ color: '#94a3b8', minWidth: '90px', flexShrink: 0 }}>{label}</span>
+      <span style={{ color: '#1e293b', fontWeight: '500', fontFamily: mono ? 'monospace' : 'inherit', fontSize: mono ? '0.78rem' : 'inherit', wordBreak: 'break-all' }}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
 function formatTime(ts: string): string {
   try {
     const d = new Date(ts)
-    return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+    if (isNaN(d.getTime())) return ts || '-'
+    const mm = (d.getMonth() + 1).toString().padStart(2, '0')
+    const dd = d.getDate().toString().padStart(2, '0')
+    const hh = d.getHours().toString().padStart(2, '0')
+    const mi = d.getMinutes().toString().padStart(2, '0')
+    return `${mm}/${dd} ${hh}:${mi}`
   } catch {
-    return ts
+    return ts || '-'
+  }
+}
+
+function formatTimeFull(ts: string): string {
+  try {
+    const d = new Date(ts)
+    if (isNaN(d.getTime())) return ts || '-'
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`
+  } catch {
+    return ts || '-'
   }
 }
