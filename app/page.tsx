@@ -371,48 +371,32 @@ export default function Home() {
               )}
             </div>
 
-            {/* 탭 */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '2px solid #e5e7eb', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {/* 검증 방식 선택 */}
+            <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', justifyContent: 'center' }}>
               <button
                 onClick={() => setInputType('text')}
                 style={{
-                  padding: '0.75rem 1.5rem',
-                  background: inputType === 'text' ? '#4f46e5' : 'transparent',
-                  color: inputType === 'text' ? 'white' : '#666',
-                  border: 'none', borderBottom: inputType === 'text' ? '3px solid #4f46e5' : 'none',
-                  cursor: 'pointer', fontWeight: 'bold', marginBottom: '-2px',
+                  padding: '0.75rem 2rem',
+                  background: inputType === 'text' ? '#4f46e5' : '#f1f5f9',
+                  color: inputType === 'text' ? 'white' : '#64748b',
+                  border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
+                  borderRadius: '8px 0 0 8px',
                 }}
               >
-                텍스트 입력
+                {'\u{1F4DD}'} 텍스트 검증
               </button>
               <button
                 onClick={() => setInputType('image')}
                 style={{
-                  padding: '0.75rem 1.5rem',
-                  background: inputType === 'image' ? '#4f46e5' : 'transparent',
-                  color: inputType === 'image' ? 'white' : '#666',
-                  border: 'none', borderBottom: inputType === 'image' ? '3px solid #4f46e5' : 'none',
-                  cursor: 'pointer', fontWeight: 'bold', marginBottom: '-2px',
+                  padding: '0.75rem 2rem',
+                  background: inputType === 'image' ? '#4f46e5' : '#f1f5f9',
+                  color: inputType === 'image' ? 'white' : '#64748b',
+                  border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
+                  borderRadius: '0 8px 8px 0',
                 }}
               >
-                이미지 업로드
+                {'\u{1F5BC}\uFE0F'} 이미지 검증
               </button>
-              <a href="/rag-safety" style={{
-                padding: '0.75rem 1.5rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold',
-                textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.95rem',
-              }}>
-                {'\u{1F4C4}'} RAG 활용가이드
-                <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.3)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>NEW</span>
-              </a>
-              <a href="/regulations" style={{
-                padding: '0.75rem 1.5rem', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold',
-                textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.95rem',
-              }}>
-                {'\u{1F4CB}'} 법규 가이드라인
-                <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.3)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>NEW</span>
-              </a>
             </div>
 
             {/* 입력 영역 */}
@@ -529,6 +513,68 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* 참고자료 섹션 */}
+        {!result && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <a href="/rag-safety" style={{
+              display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: 'white', borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textDecoration: 'none', border: '2px solid transparent',
+              transition: 'border-color 0.2s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#10b981')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+            >
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
+                {'\u{1F4C4}'}
+              </div>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '1rem', marginBottom: '0.2rem' }}>
+                  RAG 활용가이드
+                  <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>NEW</span>
+                </div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>생성형AI 안전 활용을 위한 RAG 기반 가이드</div>
+              </div>
+            </a>
+
+            <a href="/regulations" style={{
+              display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: 'white', borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textDecoration: 'none', border: '2px solid transparent',
+              transition: 'border-color 0.2s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#f59e0b')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+            >
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
+                {'\u{1F4CB}'}
+              </div>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '1rem', marginBottom: '0.2rem' }}>
+                  법규 가이드라인
+                  <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', background: '#f59e0b', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>NEW</span>
+                </div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>AI 보안 관련 법규 및 체크리스트 안내</div>
+              </div>
+            </a>
+
+            <a href="/logs" style={{
+              display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', background: 'white', borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textDecoration: 'none', border: '2px solid transparent',
+              transition: 'border-color 0.2s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3b82f6')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+            >
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
+                {'\u{1F4CA}'}
+              </div>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '1rem', marginBottom: '0.2rem' }}>검증 이력 대시보드</div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>검증 통계 및 이력 조회</div>
+              </div>
+            </a>
+          </div>
+        )}
 
         {/* 검증 결과 */}
         {result && (

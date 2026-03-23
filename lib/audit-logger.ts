@@ -52,6 +52,9 @@ export async function logValidation(
         source: r.source,
       })),
       response_time_ms: options.responseTimeMs || null,
+      original_prompt: prompt,
+      sanitized_prompt: result.sanitized_prompt || null,
+      recommendation: result.recommendation || null,
     })
 
     // 일별 통계 업데이트

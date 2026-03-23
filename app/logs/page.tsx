@@ -18,6 +18,9 @@ interface LogEntry {
   violation_details: Array<{ type: string; description: string; severity: number }>
   regulation_refs: Array<{ law: string; article: string; source: string }>
   response_time_ms: number | null
+  original_prompt: string | null
+  sanitized_prompt: string | null
+  recommendation: string | null
 }
 
 interface DashboardStats {
@@ -325,7 +328,31 @@ export default function LogsPage() {
                   <div key={`detail-${log.id}`} style={{
                     padding: '16px 24px', background: '#f8fafc', borderTop: '1px dashed #e2e8f0', borderBottom: '1px solid #e2e8f0',
                   }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                    {/* 입력/출력 전문 */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                      <div>
+                        <h4 style={{ fontWeight: 'bold', color: '#dc2626', marginBottom: '6px', fontSize: '0.85rem' }}>입력 원문 (사용자 입력)</h4>
+                        <div style={{
+                          background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 12px',
+                          fontSize: '0.82rem', color: '#1e293b', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                          maxHeight: '200px', overflowY: 'auto', fontFamily: 'monospace',
+                        }}>
+                          {log.original_prompt || '(이전 로그: 원문 미저장)'}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 style={{ fontWeight: 'bold', color: '#16a34a', marginBottom: '6px', fontSize: '0.85rem' }}>출력값 (필터링 결과)</h4>
+                        <div style={{
+                          background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 12px',
+                          fontSize: '0.82rem', color: '#1e293b', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                          maxHeight: '200px', overflowY: 'auto', fontFamily: 'monospace',
+                        }}>
+                          {log.sanitized_prompt || '(이전 로그: 출력 미저장)'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                       {/* 기본 정보 */}
                       <div>
                         <h4 style={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '8px', fontSize: '0.85rem' }}>기본 정보</h4>
@@ -334,10 +361,16 @@ export default function LogsPage() {
                           <InfoRow label="시각" value={formatTimeFull(log.created_at)} />
                           <InfoRow label="사용자" value={log.nickname || '비로그인'} />
                           <InfoRow label="입력 유형" value={log.input_type} />
+                          <InfoRow label="보안 등급" value={`${log.security_level} (위험점수: ${log.risk_score})`} />
                           <InfoRow label="프롬프트 해시" value={log.prompt_hash} mono />
                           <InfoRow label="프롬프트 길이" value={`${log.prompt_length}자`} />
                           <InfoRow label="응답 시간" value={log.response_time_ms ? `${log.response_time_ms}ms` : '-'} />
                         </div>
+                        {log.recommendation && (
+                          <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', fontSize: '0.8rem', color: '#92400e' }}>
+                            <strong>권장사항:</strong> {log.recommendation}
+                          </div>
+                        )}
                       </div>
 
                       {/* 위반 상세 */}

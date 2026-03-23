@@ -18,7 +18,10 @@ CREATE TABLE IF NOT EXISTS validation_logs (
   violation_types JSONB DEFAULT '[]',
   violation_details JSONB DEFAULT '[]',
   regulation_refs JSONB DEFAULT '[]',
-  response_time_ms INTEGER
+  response_time_ms INTEGER,
+  original_prompt TEXT,
+  sanitized_prompt TEXT,
+  recommendation TEXT
 );
 
 -- 인덱스
