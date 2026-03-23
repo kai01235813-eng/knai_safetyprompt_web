@@ -103,10 +103,10 @@ export default function Home() {
 
         let ocrRes: Response
         try {
-          ocrRes = await fetch('http://localhost:8100/ocr', { method: 'POST', body: ocrForm })
+          ocrRes = await fetch('/api/ocr', { method: 'POST', body: ocrForm })
         } catch {
           setOcrStatus('error')
-          throw new Error('OCR 서버에 연결할 수 없습니다. ocr-server가 실행 중인지 확인해주세요. (start.bat 실행)')
+          throw new Error('OCR 서버에 연결할 수 없습니다. 사내 서버에서 실행 중인지 AI혁신팀에 문의해주세요.')
         }
 
         if (!ocrRes.ok) {
@@ -443,7 +443,7 @@ export default function Home() {
                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '1rem' }}>ℹ️</span>
                   <span>
-                    이미지 OCR은 관리자 PC의 사내 서버에서 처리됩니다. 서버 미작동 시 <strong>경남본부 AI혁신팀</strong>으로 문의해주세요.
+                    이미지 OCR은 사내 서버에서 처리됩니다 (외부 전송 없음). 사내망(<strong>http://10.193.5.142:3000</strong>)에서 접속해야 이용 가능합니다. 문의: <strong>경남본부 AI혁신팀</strong>
                   </span>
                 </div>
                 {ocrStatus === 'loading' && (
@@ -463,7 +463,7 @@ export default function Home() {
                 )}
                 {ocrStatus === 'error' && (
                   <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', textAlign: 'center', color: '#991b1b', fontSize: '0.85rem' }}>
-                    OCR 서버 연결 실패 - start.bat을 실행해주세요
+                    OCR 서버 연결 실패 - 사내망(http://10.193.5.142:3000)에서 접속하거나 AI혁신팀에 문의해주세요
                   </div>
                 )}
               </div>

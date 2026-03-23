@@ -69,12 +69,12 @@ async def ocr(image: UploadFile = File(...)):
 
         results = reader.readtext(img_bytes.getvalue(), detail=1)
 
-        # 결과 정리
+        # 결과 정리 (numpy 타입을 Python 기본 타입으로 변환)
         lines = []
         full_text_parts = []
         for bbox, text, confidence in results:
             lines.append(
-                {"text": text, "confidence": round(confidence, 3), "bbox": bbox}
+                {"text": text, "confidence": round(float(confidence), 3)}
             )
             full_text_parts.append(text)
 
