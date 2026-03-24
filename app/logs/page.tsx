@@ -48,7 +48,17 @@ interface DashboardStats {
 
 type TabId = 'dashboard' | 'logs'
 
+const STORAGE_KEY = 'safety_prompt_user'
+
+interface UserSession {
+  nickname: string
+  role: 'admin' | 'team' | 'staff' | 'guest'
+  isAdmin: boolean
+}
+
 export default function LogsPage() {
+  const [user, setUser] = useState<UserSession | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('dashboard')
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -58,6 +68,17 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
+
+  // 세션 확인
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) setUser(JSON.parse(saved))
+    } catch {}
+    setAuthChecked(true)
+  }, [])
+
+  const canAccess = user && (user.role === 'admin' || user.role === 'team')
 
   const PAGE_SIZE = 20
 
@@ -104,6 +125,43 @@ export default function LogsPage() {
   }
 
   const totalPages = Math.ceil(logsTotal / PAGE_SIZE)
+
+  if (!authChecked) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+      <p style={{ color: '#94a3b8' }}>로딩 중...</p>
+    </div>
+  }
+
+  if (!canAccess) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+        <div style={{ background: 'white', borderRadius: '16px', padding: '3rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', textAlign: 'center', maxWidth: '480px' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{'\u{1F512}'}</div>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '0.75rem' }}>접근 권한이 필요합니다</h2>
+          <p style={{ color: '#64748b', lineHeight: 1.7, marginBottom: '1.5rem' }}>
+            프롬프트 검증 이력은 <strong>팀원(team) 이상</strong> 등급만 열람할 수 있습니다.<br />
+            팀원 등록은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
+          </p>
+          {!user && (
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              현재 로그인되어 있지 않습니다. 먼저 로그인해주세요.
+            </p>
+          )}
+          {user && (
+            <p style={{ color: '#f59e0b', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              현재 등급: <strong>{user.role}</strong> — 팀원(team) 이상이 필요합니다.
+            </p>
+          )}
+          <Link href="/" style={{
+            display: 'inline-block', padding: '0.6rem 1.5rem', background: '#4f46e5', color: 'white',
+            borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.9rem',
+          }}>
+            메인으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
