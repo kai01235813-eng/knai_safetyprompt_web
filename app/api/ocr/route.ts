@@ -5,10 +5,21 @@ const OCR_SERVER = process.env.OCR_SERVER_URL || 'http://localhost:8100'
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
+    const imageFile = formData.get('image') as File
+
+    if (!imageFile) {
+      return NextResponse.json({ error: '이미지 파일이 필요합니다.' }, { status: 400 })
+    }
+
+    // OCR 서버로 전달할 새 FormData 생성
+    const ocrForm = new FormData()
+    const imageBuffer = Buffer.from(await imageFile.arrayBuffer())
+    const blob = new Blob([imageBuffer], { type: imageFile.type })
+    ocrForm.append('image', blob, imageFile.name)
 
     const ocrRes = await fetch(`${OCR_SERVER}/ocr`, {
       method: 'POST',
-      body: formData,
+      body: ocrForm,
     })
 
     if (!ocrRes.ok) {

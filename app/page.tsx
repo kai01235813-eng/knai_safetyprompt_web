@@ -25,6 +25,13 @@ export default function Home() {
   const [isIntroExpanded, setIsIntroExpanded] = useState(false)
   const [ocrText, setOcrText] = useState('')
   const [ocrStatus, setOcrStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [isLocalNetwork, setIsLocalNetwork] = useState(false)
+
+  // 사내망 여부 판별
+  useEffect(() => {
+    const host = window.location.hostname
+    setIsLocalNetwork(host === 'localhost' || host === '127.0.0.1' || /^(10|172\.(1[6-9]|2\d|3[01])|192\.168)\./.test(host))
+  }, [])
 
   // 인증 상태
   const [user, setUser] = useState<UserSession | null>(null)
@@ -405,24 +412,31 @@ export default function Home() {
                   background: inputType === 'text' ? '#4f46e5' : '#f1f5f9',
                   color: inputType === 'text' ? 'white' : '#64748b',
                   border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
-                  borderRadius: '8px 0 0 8px',
+                  borderRadius: isLocalNetwork ? '8px 0 0 8px' : '8px',
                 }}
               >
                 {'\u{1F4DD}'} 텍스트 검증
               </button>
-              <button
-                onClick={() => setInputType('image')}
-                style={{
-                  padding: '0.75rem 2rem',
-                  background: inputType === 'image' ? '#4f46e5' : '#f1f5f9',
-                  color: inputType === 'image' ? 'white' : '#64748b',
-                  border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
-                  borderRadius: '0 8px 8px 0',
-                }}
-              >
-                {'\u{1F5BC}\uFE0F'} 이미지 검증
-              </button>
+              {isLocalNetwork && (
+                <button
+                  onClick={() => setInputType('image')}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    background: inputType === 'image' ? '#4f46e5' : '#f1f5f9',
+                    color: inputType === 'image' ? 'white' : '#64748b',
+                    border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
+                    borderRadius: '0 8px 8px 0',
+                  }}
+                >
+                  {'\u{1F5BC}\uFE0F'} 이미지 검증
+                </button>
+              )}
             </div>
+            {!isLocalNetwork && (
+              <div style={{ marginBottom: '1rem', padding: '0.6rem 1rem', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '0.8rem', color: '#0369a1', textAlign: 'center' }}>
+                이미지 보안 검증은 사내망에서만 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
+              </div>
+            )}
 
             {/* 입력 영역 */}
             {inputType === 'text' ? (
