@@ -211,89 +211,94 @@ const FUTURE_ITEMS = [
   },
 ]
 
-// ─── 현재 시스템 보안성 평가 데이터 ───
+// ─── 본 시스템 보안성 평가 데이터 ───
 interface AssessmentItem {
   code: string
   title: string
-  status: '충족' | '부분충족' | '미충족'
+  status: '충족' | '부분충족'
   currentState: string
   gap?: string
 }
 
-const SECURITY_ASSESSMENT: AssessmentItem[] = [
+// 카테고리 1: 본 도구(프롬프트 검증 시스템)가 직접 충족하는 항목
+const TOOL_ASSESSMENT: AssessmentItem[] = [
   {
     code: 'M09',
-    title: 'AI시스템 로깅·모니터링',
+    title: '입·출력 로깅·모니터링',
     status: '충족',
-    currentState: '사용자 입·출력, 접속이력, 위험점수, 위반유형, 응답시간 등을 Supabase DB에 실시간 기록하고, /logs 및 /admin 페이지에서 분석·조회 가능',
+    currentState: '사용자의 AI 프롬프트 입·출력, 접속이력, 위험점수, 위반유형, 응답시간 등을 DB에 실시간 기록하고, 검증 이력(/logs) 및 관리자 대시보드(/admin)에서 분석·조회 가능',
   },
   {
     code: 'M13',
     title: '입·출력 필터링',
     status: '충족',
-    currentState: '21개 탐지 패턴(주민번호, 여권번호, 신용카드, IP, API키 등)을 통해 7개 위반 유형의 민감정보를 자동 탐지·차단하고, 위반 심각도(0~10)를 산출',
+    currentState: '21개 탐지 패턴(주민번호, 여권번호, 신용카드, IP, API키 등)을 통해 7개 위반 유형의 민감정보를 자동 탐지하고, 위반 심각도(0~10)를 산출하여 차단 여부 판정',
   },
   {
     code: 'M30',
     title: '사용자 교육 및 보안정책 수립',
     status: '충족',
-    currentState: '/rag-safety(RAG 보안 가이드), /regulations(법규 매핑), /import-guide(SW반입 가이드) 등 교육 페이지를 운영하여 보안 인식 제고',
+    currentState: 'RAG 보안 가이드(/rag-safety), 법규 매핑(/regulations), SW반입 가이드(/import-guide) 등 교육 페이지를 운영하여 AI 활용 시 보안 인식 제고',
   },
   {
     code: 'M14',
     title: '입력 길이·형식 제한',
     status: '부분충족',
     currentState: '프롬프트 입력 길이 제한 및 기본적인 형식 검증을 수행',
-    gap: '프롬프트 인젝션 등 공격 패턴 형식에 대한 탐지·차단 규칙 강화 필요',
-  },
-  {
-    code: 'M08',
-    title: '데이터 로깅·모니터링',
-    status: '부분충족',
-    currentState: '사용자 프롬프트 입·출력 이력을 DB에 기록하고 정기 분석 가능',
-    gap: '원본 학습데이터 저장소에 대한 접근·변경 이력 로깅 체계는 미구축 (현재는 사용자 입력 로깅에 한정)',
+    gap: '프롬프트 인젝션 등 공격 패턴에 대한 탐지·차단 규칙 강화 필요',
   },
   {
     code: 'M05',
-    title: '데이터 접근통제',
-    status: '부분충족',
-    currentState: '역할별(admin/team/staff/guest) 권한 분리, 로그 열람 team 이상 제한, 관리자 페이지 admin 전용',
-    gap: 'AI 학습데이터 자체에 대한 사용자·그룹별 접근통제 체계는 미구축',
+    title: '접근통제 (도구 사용자)',
+    status: '충족',
+    currentState: '역할별(admin/team/staff/guest) 권한 분리, 로그 열람은 team 이상 제한, 관리자 페이지는 admin 전용으로 접근통제',
   },
-  {
-    code: 'M15',
-    title: '가드레일 다중화',
-    status: '부분충족',
-    currentState: '패턴 기반 필터링 1단계 가드레일을 운영 중',
-    gap: 'AI 모델 출력 단계, 응답 변형 등 다중 계층 가드레일 추가 필요',
-  },
-  {
-    code: 'M18',
-    title: 'AI시스템 통신구간 보호',
-    status: '부분충족',
-    currentState: 'Supabase와의 통신은 HTTPS/TLS로 암호화',
-    gap: '사내망 내부 OCR 서버 통신 등 내부 구간 암호화 검토 필요',
-  },
+]
+
+// 카테고리 2: 기관에서 AI시스템을 직접 구축할 때 적용해야 할 항목
+interface FutureAIItem {
+  code: string
+  title: string
+  description: string
+  when: string
+}
+
+const AI_SYSTEM_ITEMS: FutureAIItem[] = [
   {
     code: 'M10',
     title: '데이터 수집 명세서 관리',
-    status: '미충족',
-    currentState: '현재 학습데이터 수집에 대한 명세서 관리 체계가 없음',
-    gap: '수집 데이터의 출처, 일자, 수집 방법, 해시값 등을 기록하는 명세서 양식 및 관리 체계 수립 필요',
+    description: '수집한 데이터셋의 출처, 일자, 수집 방법·경로, 규모, 해시값 등을 기록하여 이력 관리',
+    when: 'AI모델 학습용 데이터를 수집·구성할 때',
   },
   {
     code: 'M11',
     title: 'AI시스템 구성요소 명세서 관리',
-    status: '미충족',
-    currentState: '라이브러리 목록(package.json, requirements.txt)은 있으나 보안 관점의 구성요소 명세서는 미작성',
-    gap: 'AI모델, 학습데이터, 라이브러리 등에 대한 출처·버전·해시값 등을 기록하는 명세서 체계 수립 필요',
+    description: 'AI모델, 학습데이터, 라이브러리 등 구성요소에 대한 출처·버전·해시값 등을 형상관리',
+    when: 'AI모델을 도입하거나 학습 인프라를 구축할 때',
   },
   {
     code: 'M12',
     title: 'AI시스템 구성요소 무결성 검증',
-    status: '미충족',
-    currentState: '구성요소에 대한 정기 무결성 검증 체계가 없음',
-    gap: 'AI모델, 라이브러리 등에 대한 해시값 생성 및 정기 검증 프로세스 수립 필요',
+    description: 'AI모델, 학습데이터, 라이브러리 등이 원본과 동일한지 정기적으로 검증',
+    when: 'AI모델을 운영 환경에 배포·업데이트할 때',
+  },
+  {
+    code: 'M08',
+    title: '학습데이터 로깅·모니터링',
+    description: '원시·학습데이터 저장소에 대한 접근·변경 행위를 로그로 기록하고 정기 분석',
+    when: 'AI모델의 학습데이터를 저장·관리하는 체계를 운영할 때',
+  },
+  {
+    code: 'M15',
+    title: '가드레일 다중화',
+    description: 'AI모델 입력·동작·출력 각 단계에 복수의 보호장치를 계층적으로 배치',
+    when: '생성형 AI를 대민서비스 등에 직접 활용할 때',
+  },
+  {
+    code: 'M18',
+    title: 'AI시스템 통신구간 보호',
+    description: '사용자-AI시스템 또는 AI시스템-타 시스템 통신구간에 암호화 등 보호조치 적용',
+    when: 'AI시스템을 내·외부망과 연계하여 운영할 때',
   },
 ]
 
@@ -835,7 +840,7 @@ export default function ImportGuidePage() {
           )}
         </AnimatePresence>
 
-        {/* ─── 현재 시스템 보안성 평가 ─── */}
+        {/* ─── 본 시스템(프롬프트 검증 도구) 보안성 평가 ─── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -852,18 +857,24 @@ export default function ImportGuidePage() {
             display: 'flex', alignItems: 'center', gap: '0.5rem'
           }}>
             <ClipboardCheck size={24} color="#6366f1" />
-            현재 시스템 보안성 평가
+            본 시스템 보안성 평가
           </h3>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-            본 프롬프트 보안검증 시스템이 AI보안 가이드북의 보안대책을 어느 수준까지 충족하고 있는지 평가한 결과입니다.
+          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem', lineHeight: '1.5' }}>
+            본 <strong>프롬프트 보안검증 도구</strong>가 AI보안 가이드북의 보안대책을 어느 수준까지 충족하고 있는지 평가한 결과입니다.
+          </p>
+          <p style={{
+            fontSize: '0.78rem', color: '#94a3b8', marginBottom: '1.5rem', lineHeight: '1.5',
+            padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0',
+          }}>
+            ※ 본 시스템은 AI모델을 학습·운영하는 "AI시스템"이 아니라, 사용자가 AI에 입력하는 프롬프트의 보안을 검증하는 <strong>보안 지원 도구</strong>입니다.
+            따라서 AI시스템 구축 시 적용하는 항목(M10, M11, M12 등)은 본 도구의 평가 대상이 아니며, 별도로 안내합니다.
           </p>
 
           {/* 요약 점수 */}
           {(() => {
-            const total = SECURITY_ASSESSMENT.length
-            const met = SECURITY_ASSESSMENT.filter(a => a.status === '충족').length
-            const partial = SECURITY_ASSESSMENT.filter(a => a.status === '부분충족').length
-            const notMet = SECURITY_ASSESSMENT.filter(a => a.status === '미충족').length
+            const total = TOOL_ASSESSMENT.length
+            const met = TOOL_ASSESSMENT.filter(a => a.status === '충족').length
+            const partial = TOOL_ASSESSMENT.filter(a => a.status === '부분충족').length
             const score = Math.round(((met * 1 + partial * 0.5) / total) * 100)
             return (
               <div style={{
@@ -875,15 +886,14 @@ export default function ImportGuidePage() {
                   color: 'white', textAlign: 'center',
                 }}>
                   <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{score}%</div>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.85 }}>종합 충족률</div>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.85 }}>충족률</div>
                 </div>
                 {[
                   { label: '충족', count: met, color: '#10b981', bg: '#10b98115' },
                   { label: '부분충족', count: partial, color: '#f59e0b', bg: '#f59e0b15' },
-                  { label: '미충족', count: notMet, color: '#ef4444', bg: '#ef444415' },
                 ].map(s => (
                   <div key={s.label} style={{
-                    flex: '1 1 100px', padding: '1rem', borderRadius: '12px',
+                    flex: '1 1 120px', padding: '1rem', borderRadius: '12px',
                     background: s.bg, border: `1px solid ${s.color}30`, textAlign: 'center',
                   }}>
                     <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: s.color }}>{s.count}</div>
@@ -896,11 +906,10 @@ export default function ImportGuidePage() {
 
           {/* 평가 항목 리스트 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {SECURITY_ASSESSMENT.map((item, i) => {
+            {TOOL_ASSESSMENT.map((item, i) => {
               const statusConfig = {
                 '충족': { color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0', icon: '✅' },
                 '부분충족': { color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', icon: '🔶' },
-                '미충족': { color: '#ef4444', bg: '#fef2f2', border: '#fecaca', icon: '❌' },
               }[item.status]
 
               return (
@@ -908,7 +917,7 @@ export default function ImportGuidePage() {
                   key={item.code}
                   initial={{ opacity: 0, x: -15 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  transition={{ delay: i * 0.06 }}
                   style={{
                     padding: '1rem 1.25rem',
                     borderRadius: '10px',
@@ -937,7 +946,7 @@ export default function ImportGuidePage() {
                       {statusConfig.icon} {item.status}
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: '1.5', marginBottom: '0.4rem' }}>
+                  <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: '1.5', marginBottom: item.gap ? '0.4rem' : '0' }}>
                     {item.currentState}
                   </p>
                   {item.gap && (
@@ -948,6 +957,65 @@ export default function ImportGuidePage() {
                 </motion.div>
               )
             })}
+          </div>
+        </motion.div>
+
+        {/* ─── 기관 AI시스템 구축 시 적용 항목 ─── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '16px',
+            padding: '1.5rem 2rem',
+            marginTop: '1.5rem',
+            border: '1px solid rgba(255,255,255,0.12)',
+          }}
+        >
+          <h3 style={{
+            fontSize: '1.1rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem',
+            display: 'flex', alignItems: 'center', gap: '0.5rem'
+          }}>
+            <Building2 size={20} color="#94a3b8" />
+            기관에서 AI시스템을 직접 구축할 때 적용해야 할 항목
+          </h3>
+          <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', marginBottom: '1rem', lineHeight: '1.5' }}>
+            아래 항목은 AI모델을 직접 학습·운영하는 AI시스템을 구축할 때 적용하는 보안대책입니다.<br />
+            본 프롬프트 검증 도구와는 적용 범위가 다르며, 향후 기관의 AI시스템 구축 사업 시 참고하시기 바랍니다.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {AI_SYSTEM_ITEMS.map((item, i) => (
+              <motion.div
+                key={item.code}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + i * 0.06 }}
+                style={{
+                  padding: '0.75rem 1rem',
+                  background: 'rgba(255,255,255,0.06)',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <span style={{
+                    background: 'rgba(148,163,184,0.25)', color: '#94a3b8',
+                    padding: '0.15rem 0.5rem', borderRadius: '4px',
+                    fontSize: '0.7rem', fontWeight: 'bold',
+                  }}>
+                    {item.code}
+                  </span>
+                  <span style={{ color: 'white', fontSize: '0.88rem', fontWeight: '600' }}>{item.title}</span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4', marginBottom: '0.25rem' }}>
+                  {item.description}
+                </p>
+                <p style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: '1.3' }}>
+                  적용 시점: {item.when}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
 
