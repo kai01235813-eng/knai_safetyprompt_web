@@ -339,6 +339,7 @@ export default function Home() {
           {([
             { href: '/rag-safety', label: 'RAG 활용가이드', color: '#10b981', icon: '\u{1F4C4}', isNew: true },
             { href: '/regulations', label: '법규 가이드라인', color: '#f59e0b', icon: '\u{1F4CB}', isNew: true },
+            { href: '/import-guide', label: 'SW반입 보안검증', color: '#6366f1', icon: '\u{1F512}', isNew: true },
             { href: '/logs', label: '검증 이력 (팀원 이상)', color: '#3b82f6', icon: '\u{1F4CA}', isNew: false },
           ] as const).map(item => (
             <a key={item.href} href={item.href} style={{
