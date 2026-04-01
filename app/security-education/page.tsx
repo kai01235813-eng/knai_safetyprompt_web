@@ -48,10 +48,10 @@ const quizData: QuizItem[] = [
     explanation: '일반적인 업무 절차나 공개된 기술 정보는 안전하게 질문할 수 있습니다.',
   },
   {
-    prompt: '우리 부서 올해 예산 12억 3천만원 중 AI 투자 비용을 분석해줘',
+    prompt: '한국전력 경남본부 배전부 올해 예산 12억 3천만원 중 AI 투자 비용을 분석해줘',
     isSafe: false,
     category: '사내기밀',
-    explanation: '구체적인 예산 금액, 투자 계획 등은 사내 기밀정보입니다. 구체적 수치 없이 일반적인 분석 방법을 물어보세요.',
+    explanation: '특정 기관명 + 부서명 + 구체적 예산 금액이 결합되면 사내 기밀이 특정됩니다. 기관/부서/금액을 제거하고 일반적인 분석 방법을 질문하세요.',
   },
   {
     prompt: '파이썬으로 엑셀 파일 읽는 코드 작성해줘',
@@ -109,14 +109,14 @@ const classifyCards: ClassifyCard[] = [
   { text: '홍길동, 주민번호 901215-1XXXXXX', category: 'personal', label: '개인정보' },
   { text: 'AWS 접속키: AKIA3EXAMPLE', category: 'system', label: '시스템정보' },
   { text: 'React 컴포넌트 구조 설명', category: 'safe', label: '안전' },
-  { text: '2025년 매출액 3,200억 달성 전략', category: 'confidential', label: '사내기밀' },
+  { text: '한국전력 2025년 매출액 3,200억 달성 내부 전략 보고서', category: 'confidential', label: '사내기밀' },
   { text: '엑셀 VLOOKUP 함수 사용법', category: 'safe', label: '안전' },
   { text: 'VPN 접속 계정: admin / Pass1234!', category: 'system', label: '시스템정보' },
   { text: '이메일: park.yh@kepco.co.kr', category: 'personal', label: '개인정보' },
-  { text: '경쟁사 대비 가격 책정 내부 문서', category: 'confidential', label: '사내기밀' },
+  { text: '한전KDN 대비 당사 SaaS 가격 책정 비교 내부 문서', category: 'confidential', label: '사내기밀' },
   { text: '데이터 시각화 라이브러리 추천', category: 'safe', label: '안전' },
-  { text: '고객사 계약 조건: 단가 150원/kWh', category: 'confidential', label: '사내기밀' },
-  { text: '직원 연봉 테이블 2025년 기준', category: 'personal', label: '개인정보' },
+  { text: '삼성SDI 전력공급 계약 조건: 단가 150원/kWh, 3년 장기계약', category: 'confidential', label: '사내기밀' },
+  { text: '경남본부 AI혁신팀 직원 5명 연봉 테이블 (2025년 기준)', category: 'personal', label: '개인정보' },
   { text: 'DB 마이그레이션 방법 질문', category: 'safe', label: '안전' },
 ]
 
