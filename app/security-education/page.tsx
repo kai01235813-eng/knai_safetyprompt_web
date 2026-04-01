@@ -41,87 +41,85 @@ const quizData: QuizItem[] = [
     prompt: '김철수(010-1234-5678)의 3월 전기요금을 조회해줘',
     isSafe: false,
     category: '개인정보',
-    explanation: '이름, 전화번호 등 개인정보를 AI에 입력하면 학습 데이터에 포함될 수 있습니다. 개인 식별이 가능한 정보는 절대 입력하지 마세요.',
+    explanation: '이름 + 전화번호가 프롬프트에 그대로 포함되어 있습니다. 개인을 식별할 수 있는 정보는 절대 AI에 입력하지 마세요.',
   },
   {
     prompt: '변압기 정기점검 절차를 알려줘',
     isSafe: true,
     category: '일반업무',
-    explanation: '일반적인 업무 절차나 공개된 기술 정보는 안전하게 질문할 수 있습니다.',
+    explanation: '일반적인 업무 절차 질문으로, 민감정보가 전혀 포함되지 않았습니다. 안전합니다.',
   },
   {
     prompt: '한국전력 경남본부 배전부 올해 예산 12억 3천만원 중 AI 투자 비용을 분석해줘',
     isSafe: false,
     category: '사내기밀',
-    explanation: '특정 기관명 + 부서명 + 구체적 예산 금액이 결합되면 사내 기밀이 특정됩니다. 기관/부서/금액을 제거하고 일반적인 분석 방법을 질문하세요.',
-  },
-  {
-    prompt: '파이썬으로 엑셀 파일 읽는 코드 작성해줘',
-    isSafe: true,
-    category: '일반업무',
-    explanation: '일반적인 프로그래밍 질문은 안전합니다. 단, 코드에 사내 DB 접속정보 등을 포함하지 않도록 주의하세요.',
-  },
-  {
-    prompt: 'DB서버 10.200.5.100의 관리자 비밀번호를 재설정하는 방법 알려줘',
-    isSafe: false,
-    category: '시스템정보',
-    explanation: '서버 IP, 관리자 계정 등 시스템 접속정보를 AI에 입력하면 보안 사고로 이어질 수 있습니다.',
+    explanation: '특정 기관명(한국전력) + 부서명(경남본부 배전부) + 구체적 예산 금액(12억)이 모두 프롬프트에 포함되어 있어 사내 기밀이 특정됩니다.',
   },
   {
     prompt: '영어 이메일 작성을 도와줘. "회의 일정 변경 요청" 내용으로',
     isSafe: true,
     category: '일반업무',
-    explanation: '일반적인 이메일 작성 지원은 안전합니다. 단, 수신자 이름/이메일, 구체적 회의 내용에 민감정보가 없어야 합니다.',
+    explanation: '구체적인 수신자나 민감한 회의 내용이 없는 일반적인 요청입니다. 안전합니다.',
   },
   {
     prompt: '사번 20240315 박영희 과장의 인사평가 결과를 요약해줘',
     isSafe: false,
     category: '개인정보',
-    explanation: '사번, 이름, 인사평가 등은 중요한 개인정보입니다. AI에 절대 입력하지 마세요.',
-  },
-  {
-    prompt: '신재생에너지 발전량 예측에 사용되는 알고리즘을 설명해줘',
-    isSafe: true,
-    category: '일반업무',
-    explanation: '공개된 기술 개념이나 일반 알고리즘에 대한 질문은 안전합니다.',
-  },
-  {
-    prompt: '내부 감사에서 발견된 보안 취약점 목록을 정리해줘:\n1. VPN 우회 가능\n2. 관리자 패스워드 미변경...',
-    isSafe: false,
-    category: '시스템정보',
-    explanation: '보안 취약점 정보는 최고 수준의 기밀입니다. 유출 시 해킹 등 심각한 보안 사고가 발생할 수 있습니다.',
+    explanation: '사번(20240315) + 실명(박영희) + 인사평가 결과까지, 특정인의 민감한 인사정보가 프롬프트에 그대로 담겨있습니다.',
   },
   {
     prompt: '프레젠테이션 만들 때 효과적인 슬라이드 구성 방법을 알려줘',
     isSafe: true,
     category: '일반업무',
-    explanation: '업무 스킬 향상을 위한 일반적인 질문은 안전합니다.',
-  },
-  // RAG 활용 관련
-  {
-    prompt: '사내 RAG 시스템에 우리 팀 프로젝트 보고서 PDF를 올려서 질문해도 될까?',
-    isSafe: true,
-    category: 'RAG 활용',
-    explanation: 'RAG 시스템은 문서를 "학습"하지 않고 세션 중에만 "참조"합니다. 세션 종료 시 벡터 데이터가 메모리에서 즉시 삭제되므로 안전합니다. (단, ZDR 정책 적용 시스템에 한함)',
+    explanation: '업무 스킬 향상을 위한 일반적인 질문입니다. 민감정보가 없으므로 안전합니다.',
   },
   {
-    prompt: 'ChatGPT에 사내 기술규격서를 첨부해서 요약해달라고 할게',
+    prompt: '경남본부 내부감사 결과 보고서를 요약해줘:\n- 계약업체 A사 리베이트 의혹\n- 경리팀 회계 부정 3건 발견...',
     isSafe: false,
-    category: 'RAG 활용',
-    explanation: '외부 AI(ChatGPT 등)에 사내 문서를 업로드하면 AI 학습 데이터에 포함될 수 있습니다. 사내 RAG 시스템(ZDR 정책 적용)과 외부 AI는 완전히 다릅니다!',
-  },
-  // SW 반입 관련
-  {
-    prompt: '깃허브에서 인기 많은 Python 라이브러리를 pip install로 바로 설치해서 써도 되지?',
-    isSafe: false,
-    category: 'SW반입',
-    explanation: '사내 환경에 외부 라이브러리를 반입할 때는 반드시 보안검증 절차(출처 확인, 해시값 검증, 취약점 스캔)를 거쳐야 합니다. 공급망 공격 위험이 있습니다.',
+    category: '사내기밀',
+    explanation: '내부감사 결과, 리베이트 의혹, 회계 부정 등 조직 내부의 민감한 감사 정보가 구체적으로 포함되어 있습니다.',
   },
   {
-    prompt: 'npm audit으로 프로젝트 취약점을 점검하는 방법을 알려줘',
+    prompt: '보고서 작성할 때 표와 그래프를 효과적으로 배치하는 방법을 알려줘',
     isSafe: true,
-    category: 'SW반입',
-    explanation: '취약점 점검 도구 사용법은 일반적인 보안 지식입니다. 오히려 적극 권장되는 행동이에요!',
+    category: '일반업무',
+    explanation: '문서 작성 기법에 대한 일반적인 질문입니다. 안전합니다.',
+  },
+  {
+    prompt: '이과장(lee.kwang@kepco.co.kr) 내년 승진 대상자 명단에 포함됐는지 확인해줘',
+    isSafe: false,
+    category: '개인정보',
+    explanation: '실명 + 사내 이메일 주소 + 승진 대상 여부까지, 특정인의 인사정보가 프롬프트에 노출되어 있습니다.',
+  },
+  {
+    prompt: '회의록 작성 양식과 잘 쓰는 팁을 알려줘',
+    isSafe: true,
+    category: '일반업무',
+    explanation: '양식/팁에 대한 일반적인 질문으로, 민감정보가 포함되지 않았습니다.',
+  },
+  {
+    prompt: '한전 사내시스템 로그인 ID: admin2024 / 비밀번호: Kepco#2024! 인데 접속이 안 돼. 왜 그럴까?',
+    isSafe: false,
+    category: '시스템정보',
+    explanation: '사내시스템의 실제 로그인 ID와 비밀번호가 프롬프트에 그대로 노출되어 있습니다. 유출 시 시스템 해킹 위험이 있습니다.',
+  },
+  {
+    prompt: '업무용 메모를 깔끔하게 정리하는 방법을 알려줘',
+    isSafe: true,
+    category: '일반업무',
+    explanation: '일반적인 업무 스킬 질문입니다. 안전합니다.',
+  },
+  {
+    prompt: '삼성SDI와 체결한 전력공급 계약서 내용인데 단가 150원/kWh, 위약금 조항 3조를 검토해줘',
+    isSafe: false,
+    category: '사내기밀',
+    explanation: '실제 거래처명(삼성SDI) + 구체적 계약 단가 + 위약금 조항까지, 사업상 기밀 계약 내용이 프롬프트에 포함되어 있습니다.',
+  },
+  {
+    prompt: '고객 민원 응대할 때 좋은 표현과 나쁜 표현 예시를 알려줘',
+    isSafe: true,
+    category: '일반업무',
+    explanation: '일반적인 고객 응대 기법 질문입니다. 특정 고객정보가 없으므로 안전합니다.',
   },
 ]
 
@@ -135,25 +133,21 @@ interface ClassifyCard {
 
 const classifyCards: ClassifyCard[] = [
   { text: '홍길동, 주민번호 901215-1XXXXXX', category: 'personal', label: '개인정보' },
-  { text: 'AWS 접속키: AKIA3EXAMPLE', category: 'system', label: '시스템정보' },
-  { text: 'React 컴포넌트 구조 설명', category: 'safe', label: '안전' },
+  { text: '사내시스템 접속 비밀번호: Kepco#2024!', category: 'system', label: '시스템정보' },
+  { text: '엑셀에서 표 만드는 방법', category: 'safe', label: '안전' },
   { text: '한국전력 2025년 매출액 3,200억 달성 내부 전략 보고서', category: 'confidential', label: '사내기밀' },
-  { text: '엑셀 VLOOKUP 함수 사용법', category: 'safe', label: '안전' },
+  { text: '회의록 작성 양식 예시', category: 'safe', label: '안전' },
   { text: 'VPN 접속 계정: admin / Pass1234!', category: 'system', label: '시스템정보' },
   { text: '이메일: park.yh@kepco.co.kr', category: 'personal', label: '개인정보' },
-  { text: '한전KDN 대비 당사 SaaS 가격 책정 비교 내부 문서', category: 'confidential', label: '사내기밀' },
-  { text: '데이터 시각화 라이브러리 추천', category: 'safe', label: '안전' },
-  { text: '삼성SDI 전력공급 계약 조건: 단가 150원/kWh, 3년 장기계약', category: 'confidential', label: '사내기밀' },
-  { text: '경남본부 AI혁신팀 직원 5명 연봉 테이블 (2025년 기준)', category: 'personal', label: '개인정보' },
-  { text: 'DB 마이그레이션 방법 질문', category: 'safe', label: '안전' },
-  // RAG 관련
-  { text: '사내 RAG에 업로드한 문서 (세션 종료 시 삭제)', category: 'safe', label: '안전' },
-  { text: 'ChatGPT에 첨부한 사내 설계도면 파일', category: 'confidential', label: '사내기밀' },
-  // SW반입 관련
-  { text: '출처 미확인 GitHub 저장소의 Python 패키지', category: 'system', label: '시스템정보' },
-  { text: 'SHA-256 해시값이 공식 사이트와 일치하는 라이브러리', category: 'safe', label: '안전' },
-  { text: 'pip-audit에서 Critical 취약점이 발견된 패키지', category: 'system', label: '시스템정보' },
-  { text: 'npm 공식 레지스트리에서 다운로드한 검증 완료 패키지', category: 'safe', label: '안전' },
+  { text: '한전KDN 대비 당사 입찰가격 비교 내부 문서', category: 'confidential', label: '사내기밀' },
+  { text: '비즈니스 이메일 잘 쓰는 방법', category: 'safe', label: '안전' },
+  { text: '삼성SDI 전력공급 계약 단가 150원/kWh, 3년 장기계약', category: 'confidential', label: '사내기밀' },
+  { text: '경남본부 AI혁신팀 직원 5명 연봉 테이블 (2025년)', category: 'personal', label: '개인정보' },
+  { text: '고객 응대 매뉴얼 작성 팁', category: 'safe', label: '안전' },
+  { text: '김영수 대리 건강검진 결과: 고혈압 판정', category: 'personal', label: '개인정보' },
+  { text: '사내 인트라넷 관리자 페이지 URL과 접속 권한 정보', category: 'system', label: '시스템정보' },
+  { text: '신입사원 교육자료 목차 구성 방법', category: 'safe', label: '안전' },
+  { text: '경남본부 2025년 하반기 조직개편안 (미공개)', category: 'confidential', label: '사내기밀' },
 ]
 
 /* ─────────────────────────── Before/After 데이터 ─────────────────────────── */
@@ -168,21 +162,9 @@ interface TransformExample {
 const transformExamples: TransformExample[] = [
   {
     before: '박과장(사번 12345)의 연봉이 얼마인지 알려줘',
-    after: '우리 회사 직급별 급여체계 기준을 설명해줘',
+    after: '직급별 급여체계 기준을 설명해줘',
     issue: '특정인의 사번, 연봉 등 개인정보 포함',
     tip: '개인을 특정하지 말고, 일반적인 제도/기준을 질문하세요',
-  },
-  {
-    before: '서버 192.168.0.10의 root 비밀번호를 P@ssw0rd123으로 바꿔줘',
-    after: 'Linux 서버에서 root 비밀번호를 안전하게 변경하는 절차를 알려줘',
-    issue: '실제 서버 IP와 비밀번호 노출',
-    tip: 'IP, 비밀번호 등은 제거하고 절차/방법만 질문하세요',
-  },
-  {
-    before: '우리 팀 KPI 달성률 78%인데 보고서에 90%로 올려서 작성해줘',
-    after: 'KPI 달성률이 목표 대비 낮을 때 개선 방안을 포함한 보고서 구성을 도와줘',
-    issue: '실제 KPI 수치 노출 + 허위 보고 요청',
-    tip: '구체적 수치를 빼고, 건전한 방향으로 도움을 요청하세요',
   },
   {
     before: '김민수 고객(계약번호 2024-A-3391)의 미납요금 독촉 문자를 보내줘',
@@ -190,19 +172,23 @@ const transformExamples: TransformExample[] = [
     issue: '고객 실명, 계약번호 등 고객정보 포함',
     tip: '실제 고객정보 없이 템플릿/양식을 요청하세요',
   },
-  // RAG 관련
   {
-    before: 'ChatGPT에 경남본부 내부 기술규격서 PDF를 첨부해서 요약해줘',
-    after: '사내 RAG 시스템에 기술규격서를 업로드하고 요약을 요청 (세션 종료 시 자동 삭제)',
-    issue: '외부 AI에 사내 문서 업로드 시 학습 데이터에 포함될 위험',
-    tip: '사내 문서는 ZDR 정책이 적용된 사내 RAG 시스템에서만 활용하세요',
+    before: '경남본부 배전부 올해 예산 12억 중 장비구매 비용을 정리해줘',
+    after: '부서 예산에서 장비구매 비용을 분석하는 보고서 양식을 만들어줘',
+    issue: '특정 부서명 + 구체적 예산 금액이 기밀 특정',
+    tip: '기관명/부서명/금액은 빼고 양식이나 방법을 질문하세요',
   },
-  // SW반입 관련
   {
-    before: '깃허브에서 좋아보이는 라이브러리를 찾았으니 바로 pip install로 설치하자',
-    after: '1) 공식 출처 확인 → 2) SHA-256 해시 검증 → 3) pip-audit 취약점 스캔 후 반입 신청',
-    issue: '출처/무결성/취약점 검증 없이 외부 패키지 직접 설치',
-    tip: 'SW 반입 시 출처확인 → 해시검증 → 취약점 스캔 3단계를 반드시 거치세요',
+    before: '이영희(lee.yh@kepco.co.kr)한테 보낼 승진 축하 메일을 작성해줘',
+    after: '동료의 승진을 축하하는 업무 메일 템플릿을 만들어줘',
+    issue: '실명 + 사내 이메일 주소 + 인사정보(승진) 포함',
+    tip: '이름, 이메일 등 개인정보를 빼고 일반적인 템플릿을 요청하세요',
+  },
+  {
+    before: '사내시스템(erp.kepco.co.kr) 비밀번호를 Kepco#2024!로 바꿨는데 접속이 안 돼',
+    after: '사내시스템 비밀번호 변경 후 접속 오류가 발생할 때 확인할 사항을 알려줘',
+    issue: '시스템 URL + 실제 비밀번호가 프롬프트에 노출',
+    tip: 'URL, 비밀번호 등은 제거하고 해결 방법만 질문하세요',
   },
 ]
 
@@ -910,9 +896,7 @@ export default function SecurityEducationPage() {
                       { icon: <UserX size={16} />, color: '#dc2626', text: '개인정보(이름, 연락처, 사번 등)를 AI에 입력하지 마세요' },
                       { icon: <Lock size={16} />, color: '#d97706', text: '사내 기밀(매출, 전략, 계약조건 등)을 공유하지 마세요' },
                       { icon: <Server size={16} />, color: '#2563eb', text: '시스템 정보(서버 IP, 비밀번호, API키 등)를 노출하지 마세요' },
-                      { icon: <Lightbulb size={16} />, color: '#10b981', text: '구체적 정보 대신 일반적인 방법/절차를 질문하세요' },
-                      { icon: <BookOpen size={16} />, color: '#7c3aed', text: '사내 문서는 외부 AI 대신 ZDR 정책 적용된 사내 RAG 시스템을 이용하세요' },
-                      { icon: <Package size={16} />, color: '#0891b2', text: 'SW 반입 시 출처확인 → 해시검증 → 취약점 스캔 3단계를 거치세요' },
+                      { icon: <Lightbulb size={16} />, color: '#10b981', text: '이름/금액/비밀번호 등은 빼고 일반적인 방법/절차를 질문하세요' },
                     ].map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#374151' }}>
                         <span style={{ color: item.color, flexShrink: 0 }}>{item.icon}</span>
