@@ -23,6 +23,8 @@ import {
   HelpCircle,
   Target,
   Lightbulb,
+  BookOpen,
+  Package,
 } from 'lucide-react'
 
 /* ───────────────────────────── 퀴즈 데이터 ───────────────────────────── */
@@ -95,6 +97,32 @@ const quizData: QuizItem[] = [
     category: '일반업무',
     explanation: '업무 스킬 향상을 위한 일반적인 질문은 안전합니다.',
   },
+  // RAG 활용 관련
+  {
+    prompt: '사내 RAG 시스템에 우리 팀 프로젝트 보고서 PDF를 올려서 질문해도 될까?',
+    isSafe: true,
+    category: 'RAG 활용',
+    explanation: 'RAG 시스템은 문서를 "학습"하지 않고 세션 중에만 "참조"합니다. 세션 종료 시 벡터 데이터가 메모리에서 즉시 삭제되므로 안전합니다. (단, ZDR 정책 적용 시스템에 한함)',
+  },
+  {
+    prompt: 'ChatGPT에 사내 기술규격서를 첨부해서 요약해달라고 할게',
+    isSafe: false,
+    category: 'RAG 활용',
+    explanation: '외부 AI(ChatGPT 등)에 사내 문서를 업로드하면 AI 학습 데이터에 포함될 수 있습니다. 사내 RAG 시스템(ZDR 정책 적용)과 외부 AI는 완전히 다릅니다!',
+  },
+  // SW 반입 관련
+  {
+    prompt: '깃허브에서 인기 많은 Python 라이브러리를 pip install로 바로 설치해서 써도 되지?',
+    isSafe: false,
+    category: 'SW반입',
+    explanation: '사내 환경에 외부 라이브러리를 반입할 때는 반드시 보안검증 절차(출처 확인, 해시값 검증, 취약점 스캔)를 거쳐야 합니다. 공급망 공격 위험이 있습니다.',
+  },
+  {
+    prompt: 'npm audit으로 프로젝트 취약점을 점검하는 방법을 알려줘',
+    isSafe: true,
+    category: 'SW반입',
+    explanation: '취약점 점검 도구 사용법은 일반적인 보안 지식입니다. 오히려 적극 권장되는 행동이에요!',
+  },
 ]
 
 /* ──────────────────────────── 분류 게임 데이터 ──────────────────────────── */
@@ -118,6 +146,14 @@ const classifyCards: ClassifyCard[] = [
   { text: '삼성SDI 전력공급 계약 조건: 단가 150원/kWh, 3년 장기계약', category: 'confidential', label: '사내기밀' },
   { text: '경남본부 AI혁신팀 직원 5명 연봉 테이블 (2025년 기준)', category: 'personal', label: '개인정보' },
   { text: 'DB 마이그레이션 방법 질문', category: 'safe', label: '안전' },
+  // RAG 관련
+  { text: '사내 RAG에 업로드한 문서 (세션 종료 시 삭제)', category: 'safe', label: '안전' },
+  { text: 'ChatGPT에 첨부한 사내 설계도면 파일', category: 'confidential', label: '사내기밀' },
+  // SW반입 관련
+  { text: '출처 미확인 GitHub 저장소의 Python 패키지', category: 'system', label: '시스템정보' },
+  { text: 'SHA-256 해시값이 공식 사이트와 일치하는 라이브러리', category: 'safe', label: '안전' },
+  { text: 'pip-audit에서 Critical 취약점이 발견된 패키지', category: 'system', label: '시스템정보' },
+  { text: 'npm 공식 레지스트리에서 다운로드한 검증 완료 패키지', category: 'safe', label: '안전' },
 ]
 
 /* ─────────────────────────── Before/After 데이터 ─────────────────────────── */
@@ -153,6 +189,20 @@ const transformExamples: TransformExample[] = [
     after: '요금 미납 고객에게 보내는 안내 문자 템플릿을 만들어줘',
     issue: '고객 실명, 계약번호 등 고객정보 포함',
     tip: '실제 고객정보 없이 템플릿/양식을 요청하세요',
+  },
+  // RAG 관련
+  {
+    before: 'ChatGPT에 경남본부 내부 기술규격서 PDF를 첨부해서 요약해줘',
+    after: '사내 RAG 시스템에 기술규격서를 업로드하고 요약을 요청 (세션 종료 시 자동 삭제)',
+    issue: '외부 AI에 사내 문서 업로드 시 학습 데이터에 포함될 위험',
+    tip: '사내 문서는 ZDR 정책이 적용된 사내 RAG 시스템에서만 활용하세요',
+  },
+  // SW반입 관련
+  {
+    before: '깃허브에서 좋아보이는 라이브러리를 찾았으니 바로 pip install로 설치하자',
+    after: '1) 공식 출처 확인 → 2) SHA-256 해시 검증 → 3) pip-audit 취약점 스캔 후 반입 신청',
+    issue: '출처/무결성/취약점 검증 없이 외부 패키지 직접 설치',
+    tip: 'SW 반입 시 출처확인 → 해시검증 → 취약점 스캔 3단계를 반드시 거치세요',
   },
 ]
 
@@ -363,7 +413,7 @@ export default function SecurityEducationPage() {
                   교육 시작하기 <ArrowRight size={20} />
                 </motion.button>
                 <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-                  약 5~10분 소요 | 총 {quizData.length + classifyCards.length}문제 + 작성법 학습
+                  약 10분 소요 | 총 {quizData.length + classifyCards.length}문제 + 작성법 {transformExamples.length}예시
                 </p>
               </div>
             </motion.div>
@@ -861,6 +911,8 @@ export default function SecurityEducationPage() {
                       { icon: <Lock size={16} />, color: '#d97706', text: '사내 기밀(매출, 전략, 계약조건 등)을 공유하지 마세요' },
                       { icon: <Server size={16} />, color: '#2563eb', text: '시스템 정보(서버 IP, 비밀번호, API키 등)를 노출하지 마세요' },
                       { icon: <Lightbulb size={16} />, color: '#10b981', text: '구체적 정보 대신 일반적인 방법/절차를 질문하세요' },
+                      { icon: <BookOpen size={16} />, color: '#7c3aed', text: '사내 문서는 외부 AI 대신 ZDR 정책 적용된 사내 RAG 시스템을 이용하세요' },
+                      { icon: <Package size={16} />, color: '#0891b2', text: 'SW 반입 시 출처확인 → 해시검증 → 취약점 스캔 3단계를 거치세요' },
                     ].map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#374151' }}>
                         <span style={{ color: item.color, flexShrink: 0 }}>{item.icon}</span>
@@ -898,6 +950,39 @@ export default function SecurityEducationPage() {
                     <Shield size={16} /> 보안검증 하러가기
                   </motion.a>
                 </div>
+
+                {/* 관련 가이드 링크 */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.2 }}
+                  style={{ marginTop: '2rem', padding: '1.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}
+                >
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#475569', marginBottom: '1rem', textAlign: 'center' }}>
+                    더 알아보기
+                  </h3>
+                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {[
+                      { href: '/rag-safety', label: 'RAG 활용가이드', color: '#10b981', icon: <BookOpen size={15} />, desc: 'RAG의 휘발성 메모리와 안전한 문서 활용법' },
+                      { href: '/import-guide', label: 'SW반입 보안검증', color: '#6366f1', icon: <Package size={15} />, desc: '해시검증, 취약점 스캔 등 반입 절차' },
+                      { href: '/regulations', label: '법규 가이드라인', color: '#f59e0b', icon: <Shield size={15} />, desc: '개인정보보호법 등 관련 법규 매핑' },
+                    ].map((item, i) => (
+                      <a key={i} href={item.href} style={{
+                        flex: '1 1 200px', maxWidth: '250px', padding: '1rem', background: 'white',
+                        border: `1px solid ${item.color}30`, borderRadius: '10px', textDecoration: 'none',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem',
+                        transition: 'all 0.2s',
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = `${item.color}30`; e.currentTarget.style.transform = 'translateY(0)' }}
+                      >
+                        <span style={{ color: item.color }}>{item.icon}</span>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.82rem', color: item.color }}>{item.label}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#6b7280', textAlign: 'center' }}>{item.desc}</span>
+                      </a>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
