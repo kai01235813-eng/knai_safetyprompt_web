@@ -25,6 +25,10 @@ import {
   Lightbulb,
   BookOpen,
   Package,
+  Settings,
+  EyeOff,
+  Unlink,
+  KeyRound,
 } from 'lucide-react'
 
 /* ───────────────────────────── 퀴즈 데이터 ───────────────────────────── */
@@ -192,6 +196,93 @@ const transformExamples: TransformExample[] = [
   },
 ]
 
+/* ──────────────── 상용 AI 보안설정 데이터 (국정원 가이드라인) ──────────────── */
+
+interface AiServiceSetting {
+  service: string
+  color: string
+  settings: { icon: 'eye-off' | 'unlink' | 'key' | 'settings'; title: string; desc: string }[]
+}
+
+const aiServiceSettings: AiServiceSetting[] = [
+  {
+    service: 'ChatGPT',
+    color: '#10a37f',
+    settings: [
+      { icon: 'eye-off', title: '"모두를 위한 모델 개선" 해제', desc: '설정 > 데이터 제어 > 해당 기능을 끄면 입력한 텍스트가 AI 모델 훈련에 활용되지 않습니다.' },
+      { icon: 'key', title: '개인/기관 정보 기재 금지', desc: '설정 > 개인 맞춤 설정 > 닉네임, 직업 등에 개인이나 기관을 특정할 수 있는 정보를 입력하지 마세요.' },
+      { icon: 'unlink', title: '외부 클라우드 연결 해제', desc: '설정 > 연결된 앱 > Google Drive, OneDrive 등 외부 클라우드 서비스 연결을 해제하세요.' },
+    ],
+  },
+  {
+    service: 'Gemini (구글)',
+    color: '#4285f4',
+    settings: [
+      { icon: 'eye-off', title: '활동 기록 보관 "사용 안함"', desc: '좌측 하단 활동 > 활동 기록 보관을 "사용 안함"으로 설정하여 기록이 보관되지 않도록 하세요.' },
+      { icon: 'unlink', title: 'Google Workspace 연결 해제', desc: '설정 및 도움말 > 연결된 앱 > Gmail, Calendar, Drive 등 연결을 해제하세요.' },
+      { icon: 'key', title: '2단계 인증 사용', desc: '구글 계정 탈취 시 연동된 핸드폰 등 타 기기까지 노출될 수 있으므로 2단계 인증을 반드시 설정하세요.' },
+    ],
+  },
+  {
+    service: 'Claude (클로드)',
+    color: '#d4a574',
+    settings: [
+      { icon: 'eye-off', title: '"채팅 기록에서 기억 생성" 비활성화', desc: '설정 > 기능 > 메모리 항목에서 "채팅 기록에서 기억 생성"을 꺼서 대화 내용이 기억되지 않도록 하세요.' },
+      { icon: 'key', title: '프로필에 개인/기관 정보 기재 금지', desc: '설정 > 프로필 > 닉네임, 직업 등에 개인이나 기관을 특정할 수 있는 정보를 입력하지 마세요.' },
+      { icon: 'unlink', title: '커넥터 비활성화', desc: '관리자 설정 > 커넥터 > Google Drive, Gmail, Calendar, GitHub 등 연결을 해제하세요.' },
+    ],
+  },
+  {
+    service: 'Perplexity (퍼플렉시티)',
+    color: '#20b2aa',
+    settings: [
+      { icon: 'eye-off', title: '"AI 데이터 보존" 해제', desc: '계정 > 선호 설정 > "AI 데이터 보존"을 끄면 입력 데이터가 AI 모델 훈련에 활용되지 않습니다.' },
+      { icon: 'key', title: '자기소개에 개인/기관 정보 기재 금지', desc: '계정 > 개인화 > 자기소개란에 소속 기관, 직위 등 특정 가능한 정보를 입력하지 마세요.' },
+      { icon: 'unlink', title: '외부 클라우드 연결 해제', desc: '계정 > 연결자 > Gmail, Google Drive, Outlook, Dropbox 등 연결을 해제하세요.' },
+    ],
+  },
+]
+
+/* 상용 AI 보안설정 O/X 퀴즈 */
+interface SettingQuizItem {
+  question: string
+  isCorrect: boolean
+  explanation: string
+}
+
+const settingQuizData: SettingQuizItem[] = [
+  {
+    question: 'ChatGPT의 "모두를 위한 모델 개선" 기능을 켜두면, 내가 입력한 텍스트가 AI 모델 훈련에 활용될 수 있다.',
+    isCorrect: true,
+    explanation: '맞습니다. 이 기능이 켜져 있으면 사용자가 입력한 텍스트가 AI 모델 개선에 활용됩니다. 반드시 해제하세요. (설정 > 데이터 제어)',
+  },
+  {
+    question: 'Gemini 사용 시 구글 계정에 2단계 인증을 설정할 필요는 없다.',
+    isCorrect: false,
+    explanation: '틀립니다. 구글 계정이 탈취되면 Gemini뿐 아니라 연동된 핸드폰, 이메일 등 타 기기와 서비스까지 노출됩니다. 2단계 인증은 필수입니다.',
+  },
+  {
+    question: 'Claude에서 "채팅 기록에서 기억 생성" 기능을 켜두면, AI가 과거 대화 내용을 기억하여 민감정보가 축적될 수 있다.',
+    isCorrect: true,
+    explanation: '맞습니다. 이 기능이 켜져 있으면 과거 대화에서 민감정보를 기억하게 됩니다. 설정 > 기능 > 메모리에서 비활성화하세요.',
+  },
+  {
+    question: 'Perplexity에 Google Drive를 연결하면 업무 효율이 올라가니 적극 연결해서 사용해야 한다.',
+    isCorrect: false,
+    explanation: '틀립니다. 외부 AI 서비스에 클라우드를 연결하면 저장된 업무 문서가 AI 서비스에 노출될 수 있습니다. 계정 > 연결자에서 해제하세요.',
+  },
+  {
+    question: '상용 AI 서비스의 프로필/닉네임에 소속 기관명이나 직위를 입력하면 안 된다.',
+    isCorrect: true,
+    explanation: '맞습니다. 프로필에 기관명, 부서, 직위 등을 입력하면 AI가 이를 학습하거나 다른 사용자에게 노출될 수 있습니다.',
+  },
+  {
+    question: '상용 AI 서비스에 Google Drive, OneDrive 등 클라우드를 연결하면 업무 문서가 AI에 노출될 위험이 있다.',
+    isCorrect: true,
+    explanation: '맞습니다. 클라우드를 연결하면 저장된 문서에 AI가 접근할 수 있어 민감정보 유출 위험이 있습니다. 모든 외부 클라우드 연결을 해제하세요.',
+  },
+]
+
 /* ─────────────────────────── 카테고리 스타일 ─────────────────────────── */
 
 const categoryStyle: Record<string, { bg: string; color: string; icon: React.ReactNode }> = {
@@ -204,7 +295,7 @@ const categoryStyle: Record<string, { bg: string; color: string; icon: React.Rea
 /* ═══════════════════════════ 메인 컴포넌트 ═══════════════════════════ */
 
 export default function SecurityEducationPage() {
-  const [stage, setStage] = useState(0) // 0: 인트로, 1: 퀴즈, 2: 분류, 3: Before/After, 4: 결과
+  const [stage, setStage] = useState(0) // 0: 인트로, 1: 퀴즈, 2: 분류, 3: Before/After, 4: 상용AI보안설정, 5: 결과
   const [quizIndex, setQuizIndex] = useState(0)
   const [quizAnswers, setQuizAnswers] = useState<(boolean | null)[]>(Array(quizData.length).fill(null))
   const [showExplanation, setShowExplanation] = useState(false)
@@ -214,6 +305,11 @@ export default function SecurityEducationPage() {
   const [transformIndex, setTransformIndex] = useState(0)
   const [showTransform, setShowTransform] = useState(false)
   const [transformViewed, setTransformViewed] = useState<boolean[]>(Array(transformExamples.length).fill(false))
+  const [settingStep, setSettingStep] = useState(0) // 0: 가이드 보기, 1: 퀴즈
+  const [settingServiceIndex, setSettingServiceIndex] = useState(0)
+  const [settingQuizIndex, setSettingQuizIndex] = useState(0)
+  const [settingQuizAnswers, setSettingQuizAnswers] = useState<(boolean | null)[]>(Array(settingQuizData.length).fill(null))
+  const [showSettingExplanation, setShowSettingExplanation] = useState(false)
 
   // 점수 계산
   const quizScore = quizAnswers.filter((a, i) => a === quizData[i].isSafe).length
@@ -224,7 +320,8 @@ export default function SecurityEducationPage() {
     if (a === 'safe' && card.category === 'safe') return true
     return false
   }).length
-  const totalScore = Math.round(((quizScore + classifyScore) / (quizData.length + classifyCards.length)) * 100)
+  const settingQuizScore = settingQuizAnswers.filter((a, i) => a === settingQuizData[i].isCorrect).length
+  const totalScore = Math.round(((quizScore + classifyScore + settingQuizScore) / (quizData.length + classifyCards.length + settingQuizData.length)) * 100)
 
   const handleQuizAnswer = useCallback((userSafe: boolean) => {
     const newAnswers = [...quizAnswers]
@@ -263,9 +360,25 @@ export default function SecurityEducationPage() {
     if (transformIndex < transformExamples.length - 1) {
       setTransformIndex(transformIndex + 1)
     } else {
-      setStage(4)
+      setStage(4) // 상용AI 보안설정 단계로 이동
     }
   }, [transformIndex])
+
+  const handleSettingQuizAnswer = useCallback((userAnswer: boolean) => {
+    const newAnswers = [...settingQuizAnswers]
+    newAnswers[settingQuizIndex] = userAnswer
+    setSettingQuizAnswers(newAnswers)
+    setShowSettingExplanation(true)
+  }, [settingQuizAnswers, settingQuizIndex])
+
+  const nextSettingQuiz = useCallback(() => {
+    setShowSettingExplanation(false)
+    if (settingQuizIndex < settingQuizData.length - 1) {
+      setSettingQuizIndex(settingQuizIndex + 1)
+    } else {
+      setStage(5) // 결과 단계로 이동
+    }
+  }, [settingQuizIndex])
 
   const resetAll = () => {
     setStage(0)
@@ -278,6 +391,11 @@ export default function SecurityEducationPage() {
     setTransformIndex(0)
     setShowTransform(false)
     setTransformViewed(Array(transformExamples.length).fill(false))
+    setSettingStep(0)
+    setSettingServiceIndex(0)
+    setSettingQuizIndex(0)
+    setSettingQuizAnswers(Array(settingQuizData.length).fill(null))
+    setShowSettingExplanation(false)
   }
 
   // 스테이지 라벨
@@ -286,6 +404,7 @@ export default function SecurityEducationPage() {
     { label: '퀴즈', icon: <HelpCircle size={16} /> },
     { label: '분류', icon: <Target size={16} /> },
     { label: '작성법', icon: <Lightbulb size={16} /> },
+    { label: '보안설정', icon: <Settings size={16} /> },
     { label: '결과', icon: <Trophy size={16} /> },
   ]
 
@@ -367,6 +486,7 @@ export default function SecurityEducationPage() {
                     { icon: <HelpCircle size={20} />, title: '1단계: 시나리오 퀴즈', desc: '위험한 프롬프트를 판단해보세요', color: '#3b82f6' },
                     { icon: <Target size={20} />, title: '2단계: 민감정보 분류', desc: '정보의 위험도를 분류해보세요', color: '#f59e0b' },
                     { icon: <Lightbulb size={20} />, title: '3단계: 안전한 작성법', desc: 'Before/After로 배워보세요', color: '#10b981' },
+                    { icon: <Settings size={20} />, title: '4단계: AI 보안설정', desc: '상용 AI 서비스 필수 설정', color: '#f97316' },
                   ].map((item, i) => (
                     <motion.div
                       key={i}
@@ -399,7 +519,7 @@ export default function SecurityEducationPage() {
                   교육 시작하기 <ArrowRight size={20} />
                 </motion.button>
                 <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-                  약 10분 소요 | 총 {quizData.length + classifyCards.length}문제 + 작성법 {transformExamples.length}예시
+                  약 10~15분 소요 | 총 {quizData.length + classifyCards.length + settingQuizData.length}문제 + 작성법 + 보안설정
                 </p>
               </div>
             </motion.div>
@@ -810,8 +930,160 @@ export default function SecurityEducationPage() {
             </motion.div>
           )}
 
-          {/* ═══ 스테이지 4: 최종 결과 ═══ */}
+          {/* ═══ 스테이지 4: 상용 AI 보안설정 (국정원 가이드라인) ═══ */}
           {stage === 4 && (
+            <motion.div key="settings" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+              <div style={{ background: 'white', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1f2937', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Settings size={22} style={{ color: '#f97316' }} />
+                    4단계: 상용 AI 서비스 보안설정
+                  </h2>
+                </div>
+
+                {/* 출처 표시 */}
+                <div style={{ marginBottom: '1.5rem', padding: '0.6rem 1rem', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', fontSize: '0.75rem', color: '#9a3412', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Shield size={14} />
+                  <span>출처: <strong>국가정보원 &middot; 국가보안기술연구소</strong> &ldquo;국가&middot;공공기관 AI보안 가이드북&rdquo; (2025.12, v2.0) 부록3</span>
+                </div>
+
+                {settingStep === 0 ? (
+                  <>
+                    {/* 서비스별 보안설정 카드 */}
+                    <p style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '1.5rem', textAlign: 'center' }}>
+                      ChatGPT, Gemini, Claude, Perplexity 사용 시 반드시 확인해야 할 보안설정입니다
+                    </p>
+
+                    <AnimatePresence mode="wait">
+                      <motion.div key={settingServiceIndex} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.3 }}>
+                        {(() => {
+                          const svc = aiServiceSettings[settingServiceIndex]
+                          return (
+                            <div style={{ border: `2px solid ${svc.color}30`, borderRadius: '12px', overflow: 'hidden' }}>
+                              <div style={{ background: svc.color, color: 'white', padding: '0.75rem 1.2rem', fontWeight: 'bold', fontSize: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>{svc.service}</span>
+                                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>{settingServiceIndex + 1} / {aiServiceSettings.length}</span>
+                              </div>
+                              <div style={{ padding: '1.2rem' }}>
+                                {svc.settings.map((s, i) => (
+                                  <div key={i} style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem 0', borderBottom: i < svc.settings.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                                    <div style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '8px', background: `${svc.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: svc.color }}>
+                                      {s.icon === 'eye-off' ? <EyeOff size={16} /> : s.icon === 'unlink' ? <Unlink size={16} /> : s.icon === 'key' ? <KeyRound size={16} /> : <Settings size={16} />}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#1f2937', marginBottom: '0.2rem' }}>{s.title}</div>
+                                      <div style={{ fontSize: '0.78rem', color: '#6b7280', lineHeight: 1.5 }}>{s.desc}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })()}
+                      </motion.div>
+                    </AnimatePresence>
+
+                    {/* 네비게이션 */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                      {settingServiceIndex > 0 && (
+                        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => setSettingServiceIndex(settingServiceIndex - 1)} style={{ padding: '0.6rem 1.5rem', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <ArrowLeft size={14} /> 이전
+                        </motion.button>
+                      )}
+                      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => {
+                        if (settingServiceIndex < aiServiceSettings.length - 1) {
+                          setSettingServiceIndex(settingServiceIndex + 1)
+                        } else {
+                          setSettingStep(1) // 퀴즈로 이동
+                        }
+                      }} style={{ padding: '0.6rem 1.5rem', background: '#f97316', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {settingServiceIndex < aiServiceSettings.length - 1 ? (<>다음 서비스 <ArrowRight size={14} /></>) : (<>확인 퀴즈 풀기 <ArrowRight size={14} /></>)}
+                      </motion.button>
+                    </div>
+
+                    {/* 서비스 인디케이터 */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', marginTop: '1rem' }}>
+                      {aiServiceSettings.map((_, i) => (
+                        <div key={i} onClick={() => setSettingServiceIndex(i)} style={{ width: '8px', height: '8px', borderRadius: '50%', background: i === settingServiceIndex ? '#f97316' : '#d1d5db', cursor: 'pointer', transition: 'all 0.2s' }} />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* 보안설정 확인 퀴즈 (O/X) */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: 0 }}>
+                        위 보안설정을 잘 숙지하셨는지 확인해볼까요?
+                      </p>
+                      <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 'bold' }}>
+                        {settingQuizIndex + 1} / {settingQuizData.length}
+                      </span>
+                    </div>
+
+                    {/* 진행률 바 */}
+                    <div style={{ height: '6px', background: '#f3f4f6', borderRadius: '3px', marginBottom: '1.5rem', overflow: 'hidden' }}>
+                      <motion.div animate={{ width: `${((settingQuizIndex + 1) / settingQuizData.length) * 100}%` }} style={{ height: '100%', background: 'linear-gradient(90deg, #f97316, #ef4444)', borderRadius: '3px' }} />
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                      <motion.div key={settingQuizIndex} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.3 }}>
+                        {/* 문제 카드 */}
+                        <div style={{ background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                            <Settings size={14} /> 보안설정 O/X 퀴즈
+                          </div>
+                          <div style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6 }}>
+                            {settingQuizData[settingQuizIndex].question}
+                          </div>
+                        </div>
+
+                        {!showSettingExplanation ? (
+                          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSettingQuizAnswer(true)} style={{ flex: 1, maxWidth: '200px', padding: '1rem', background: '#f0fdf4', border: '2px solid #86efac', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                              <CheckCircle2 size={28} style={{ color: '#16a34a' }} />
+                              <span style={{ fontWeight: 'bold', color: '#16a34a', fontSize: '1rem' }}>맞다 (O)</span>
+                            </motion.button>
+                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSettingQuizAnswer(false)} style={{ flex: 1, maxWidth: '200px', padding: '1rem', background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                              <XCircle size={28} style={{ color: '#dc2626' }} />
+                              <span style={{ fontWeight: 'bold', color: '#dc2626', fontSize: '1rem' }}>틀리다 (X)</span>
+                            </motion.button>
+                          </div>
+                        ) : (
+                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                            {settingQuizAnswers[settingQuizIndex] === settingQuizData[settingQuizIndex].isCorrect ? (
+                              <div style={{ background: '#f0fdf4', border: '2px solid #86efac', borderRadius: '12px', padding: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <CheckCircle2 size={24} style={{ color: '#16a34a', flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                  <div style={{ fontWeight: 'bold', color: '#16a34a', marginBottom: '0.3rem' }}>정답!</div>
+                                  <div style={{ fontSize: '0.85rem', color: '#374151', lineHeight: 1.5 }}>{settingQuizData[settingQuizIndex].explanation}</div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ background: '#fef2f2', border: '2px solid #fca5a5', borderRadius: '12px', padding: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <XCircle size={24} style={{ color: '#dc2626', flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                  <div style={{ fontWeight: 'bold', color: '#dc2626', marginBottom: '0.3rem' }}>오답!</div>
+                                  <div style={{ fontSize: '0.85rem', color: '#374151', lineHeight: 1.5 }}>{settingQuizData[settingQuizIndex].explanation}</div>
+                                </div>
+                              </div>
+                            )}
+                            <div style={{ textAlign: 'center' }}>
+                              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={nextSettingQuiz} style={{ padding: '0.7rem 2rem', background: '#f97316', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                                {settingQuizIndex < settingQuizData.length - 1 ? (<>다음 문제 <ArrowRight size={16} /></>) : (<>결과 확인하기 <Trophy size={16} /></>)}
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══ 스테이지 5: 최종 결과 ═══ */}
+          {stage === 5 && (
             <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
               <div style={{ background: 'white', borderRadius: '16px', padding: '2.5rem 2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'center' }}>
                 {/* 점수에 따른 아이콘 */}
@@ -876,6 +1148,10 @@ export default function SecurityEducationPage() {
                     <div style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold', marginBottom: '0.3rem' }}>3단계: 작성법 학습</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#065f46' }}>완료</div>
                   </div>
+                  <div style={{ padding: '1rem 1.5rem', background: '#fff7ed', borderRadius: '12px', minWidth: '160px' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#f97316', fontWeight: 'bold', marginBottom: '0.3rem' }}>4단계: 보안설정 퀴즈</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#9a3412' }}>{settingQuizScore} / {settingQuizData.length}</div>
+                  </div>
                 </motion.div>
 
                 {/* 핵심 요약 */}
@@ -897,6 +1173,7 @@ export default function SecurityEducationPage() {
                       { icon: <Lock size={16} />, color: '#d97706', text: '사내 기밀(매출, 전략, 계약조건 등)을 공유하지 마세요' },
                       { icon: <Server size={16} />, color: '#2563eb', text: '시스템 정보(서버 IP, 비밀번호, API키 등)를 노출하지 마세요' },
                       { icon: <Lightbulb size={16} />, color: '#10b981', text: '이름/금액/비밀번호 등은 빼고 일반적인 방법/절차를 질문하세요' },
+                      { icon: <Settings size={16} />, color: '#f97316', text: '상용 AI 서비스 사용 시 "모델 학습" 기능 해제, 클라우드 연결 해제 필수' },
                     ].map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#374151' }}>
                         <span style={{ color: item.color, flexShrink: 0 }}>{item.icon}</span>
