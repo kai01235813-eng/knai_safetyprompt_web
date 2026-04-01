@@ -299,7 +299,7 @@ const aiServiceSettings: AiServiceSetting[] = [
     service: 'Claude (클로드)',
     color: '#d4a574',
     settings: [
-      { icon: 'eye-off', title: '"채팅 기록에서 기억 생성" 비활성화', desc: '설정 > 기능 > 메모리 항목에서 "채팅 기록에서 기억 생성"을 꺼서 대화 내용이 기억되지 않도록 하세요.' },
+      { icon: 'eye-off', title: '"채팅 기록에서 기억 생성" 비활성화 (권고)', desc: '설정 > 기능 > 메모리 항목에서 "채팅 기록에서 기억 생성"을 꺼서 대화 내용이 기억되지 않도록 하세요. 단, 개발 등 프로젝트 맥락 유지가 필요한 업무의 경우 민감정보 입력 금지 교육 등 보완 대책을 마련한 후 유연하게 적용할 수 있습니다.' },
       { icon: 'key', title: '프로필에 개인/기관 정보 기재 금지', desc: '설정 > 프로필 > 닉네임, 직업 등에 개인이나 기관을 특정할 수 있는 정보를 입력하지 마세요.' },
       { icon: 'unlink', title: '커넥터 비활성화', desc: '관리자 설정 > 커넥터 > Google Drive, Gmail, Calendar, GitHub 등 연결을 해제하세요.' },
     ],
@@ -336,7 +336,7 @@ const settingQuizData: SettingQuizItem[] = [
   {
     question: 'Claude에서 "채팅 기록에서 기억 생성" 기능을 켜두면, AI가 과거 대화 내용을 기억하여 민감정보가 축적될 수 있다.',
     isCorrect: true,
-    explanation: '맞습니다. 이 기능이 켜져 있으면 과거 대화에서 민감정보를 기억하게 됩니다. 설정 > 기능 > 메모리에서 비활성화하세요.',
+    explanation: '맞습니다. 이 기능이 켜져 있으면 과거 대화에서 민감정보를 기억하게 됩니다. 원칙적으로 비활성화를 권고하나, 개발 등 맥락 유지가 필요한 업무는 민감정보 입력 금지 교육 등 보완 대책 하에 유연하게 적용할 수 있습니다.',
   },
   {
     question: 'Perplexity에 Google Drive를 연결하면 업무 효율이 올라가니 적극 연결해서 사용해야 한다.',
@@ -1010,7 +1010,7 @@ export default function SecurityEducationPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1f2937', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Settings size={22} style={{ color: '#f97316' }} />
-                    4단계: 상용 AI 서비스 보안설정
+                    4단계: 상용 AI 서비스 업무 사용시 보안설정
                   </h2>
                 </div>
 
