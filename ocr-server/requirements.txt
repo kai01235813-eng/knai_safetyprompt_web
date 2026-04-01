@@ -1,5 +1,6 @@
-easyocr
+rapidocr-onnxruntime
 fastapi
 uvicorn
 python-multipart
 Pillow
+numpy

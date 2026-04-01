@@ -25,6 +25,7 @@ export default function Home() {
   const [isIntroExpanded, setIsIntroExpanded] = useState(false)
   const [ocrText, setOcrText] = useState('')
   const [ocrStatus, setOcrStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [ocrEngine, setOcrEngine] = useState('')
   const [isLocalNetwork, setIsLocalNetwork] = useState(false)
 
   // 사내망 여부 판별
@@ -104,6 +105,7 @@ export default function Home() {
       if (inputType === 'image' && imageFile) {
         setOcrStatus('loading')
         setOcrText('')
+        setOcrEngine('')
 
         const ocrForm = new FormData()
         ocrForm.append('image', imageFile)
@@ -130,6 +132,7 @@ export default function Home() {
 
         textToValidate = ocrData.extracted_text
         setOcrText(textToValidate)
+        setOcrEngine(ocrData.engine || 'unknown')
         setOcrStatus('done')
       }
 
@@ -340,6 +343,7 @@ export default function Home() {
             { href: '/rag-safety', label: 'RAG 활용가이드', color: '#10b981', icon: '\u{1F4C4}', isNew: true },
             { href: '/regulations', label: '법규 가이드라인', color: '#f59e0b', icon: '\u{1F4CB}', isNew: true },
             { href: '/import-guide', label: 'SW반입 보안검증', color: '#6366f1', icon: '\u{1F512}', isNew: true },
+            { href: '/security-education', label: 'AI 보안교육', color: '#7c3aed', icon: '\u{1F393}', isNew: true },
             { href: '/logs', label: '검증 이력 (팀원 이상)', color: '#3b82f6', icon: '\u{1F4CA}', isNew: false },
           ] as const).map(item => (
             <a key={item.href} href={item.href} style={{
@@ -458,10 +462,10 @@ export default function Home() {
                   이미지 파일을 업로드하세요 (OCR로 텍스트 추출 후 보안 검증)
                 </label>
                 <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '3rem', textAlign: 'center', background: '#f9fafb' }}>
-                  <input type="file" accept="image/*" onChange={(e) => { setImageFile(e.target.files?.[0] || null); setOcrStatus('idle'); setOcrText('') }} style={{ marginBottom: '1rem' }} />
+                  <input type="file" accept="image/*" onChange={(e) => { setImageFile(e.target.files?.[0] || null); setOcrStatus('idle'); setOcrText(''); setOcrEngine('') }} style={{ marginBottom: '1rem' }} />
                   <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>PNG, JPG, JPEG 파일을 업로드하세요</p>
                   <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                    사내 OCR 서버(EasyOCR)로 처리 - 외부 전송 없음
+                    사내 OCR 서버(PaddleOCR)로 처리 - 외부 전송 없음
                   </p>
                 </div>
                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -477,8 +481,9 @@ export default function Home() {
                 )}
                 {ocrStatus === 'done' && ocrText && (
                   <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#15803d', marginBottom: '0.5rem' }}>
-                      추출된 텍스트 ({ocrText.length}자)
+                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#15803d', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>추출된 텍스트 ({ocrText.length}자)</span>
+                      {ocrEngine && <span style={{ fontSize: '0.7rem', background: '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '9999px', color: '#166534' }}>엔진: {ocrEngine}</span>}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#374151', whiteSpace: 'pre-wrap', maxHeight: '150px', overflowY: 'auto', background: 'white', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
                       {ocrText}
