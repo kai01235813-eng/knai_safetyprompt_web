@@ -4,7 +4,7 @@ Railway에서 실행되며 Python 검증 엔진 제공
 
 Features:
 - Singleton 패턴으로 검증 엔진 초기화 (메모리 효율)
-- OCR 추상화 레이어 (Tesseract → PaddleOCR 교체 용이)
+- OCR 추상화 레이어 (RapidOCR/PaddleOCR)
 - Lifespan을 통한 리소스 관리
 """
 from contextlib import asynccontextmanager
@@ -92,23 +92,8 @@ app_state = AppState()
 # OCR Engine Setup
 # ============================================================
 
-def _find_tesseract_path() -> Optional[str]:
-    """Tesseract 경로 탐색 (Windows)"""
-    if sys.platform == 'win32':
-        possible_paths = [
-            r'C:\Program Files\Tesseract-OCR\tesseract.exe',
-            r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
-            r'C:\Tesseract-OCR\tesseract.exe',
-        ]
-        for path in possible_paths:
-            if os.path.exists(path):
-                return path
-    return None
-
-
 def _init_ocr_engine():
-    """OCR 엔진 초기화 (우선순위: RapidOCR → Tesseract)"""
-    # 1. RapidOCR 시도 (PaddleOCR 기반, 한국어 인식률 우수)
+    """OCR 엔진 초기화 (RapidOCR/PaddleOCR)"""
     try:
         from ocr_engine import RapidOCR
         rapid = RapidOCR()
@@ -123,32 +108,8 @@ def _init_ocr_engine():
     except Exception as e:
         print(f"⚠️ RapidOCR init failed: {e}")
 
-    # 2. Tesseract 시도
-    try:
-        from ocr_engine import TesseractOCR
-        tesseract_path = _find_tesseract_path()
-        tesseract = TesseractOCR(tesseract_path)
-        if tesseract.is_available():
-            app_state.ocr_engine = tesseract
-            app_state.ocr_engine_name = "tesseract"
-            app_state.ocr_available = True
-            print("✅ OCR Engine: Tesseract loaded")
-            return
-    except ImportError:
-        pass
-    except Exception as e:
-        print(f"⚠️ Tesseract init failed: {e}")
-
-    # 3. Fallback: pytesseract 직접 사용 (기존 방식)
-    try:
-        import pytesseract
-        from PIL import Image
-        app_state.ocr_engine_name = "pytesseract-legacy"
-        app_state.ocr_available = True
-        print("✅ OCR Engine: pytesseract (legacy mode)")
-    except Exception as e:
-        print(f"⚠️ No OCR engine available: {e}")
-        app_state.ocr_available = False
+    print("⚠️ No OCR engine available. Install: pip install rapidocr-onnxruntime")
+    app_state.ocr_available = False
 
 
 def _init_llm_corrector():
@@ -358,7 +319,7 @@ async def validate_image(request: ImageValidateRequest):
             "sanitized_prompt": "",
             "original_prompt": "",
             "timestamp": datetime.now().isoformat(),
-            "recommendation": "OCR 엔진이 설치되지 않았습니다. Tesseract 또는 RapidOCR 설치 후 사용 가능합니다.",
+            "recommendation": "OCR 엔진이 설치되지 않았습니다. RapidOCR 설치 후 사용 가능합니다. (pip install rapidocr-onnxruntime)",
             "extracted_text": ""
         }
 
@@ -381,16 +342,8 @@ async def validate_image(request: ImageValidateRequest):
             finally:
                 os.unlink(tmp_path)
         else:
-            # Legacy: pytesseract 직접 사용
-            import pytesseract
-            from PIL import Image
-
-            image = Image.open(BytesIO(image_data))
-
-            try:
-                extracted_text = pytesseract.image_to_string(image, lang='kor+eng')
-            except Exception:
-                extracted_text = pytesseract.image_to_string(image, lang='eng')
+            # OCR 엔진이 초기화되지 않은 경우
+            extracted_text = ""
 
         # 텍스트가 없으면 안전 반환
         if not extracted_text.strip():

@@ -37,28 +37,13 @@ def main():
             print(json.dumps(result, ensure_ascii=False))
             sys.exit(1)
 
-        # Tesseract 경로 설정 (Windows)
-        tesseract_path = None
-        if sys.platform == 'win32':
-            # 일반적인 Tesseract 설치 경로들
-            possible_paths = [
-                r'C:\Program Files\Tesseract-OCR\tesseract.exe',
-                r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
-                r'C:\Tesseract-OCR\tesseract.exe',
-            ]
-            for path in possible_paths:
-                if os.path.exists(path):
-                    tesseract_path = path
-                    break
-
         # 분석기 초기화
         try:
-            analyzer = ImageSecurityAnalyzer(tesseract_path)
+            analyzer = ImageSecurityAnalyzer()
         except Exception as e:
             result = {
-                'error': f'OCR 엔진 초기화 실패: {str(e)}. Tesseract OCR이 설치되어 있는지 확인하세요.',
+                'error': f'OCR 엔진 초기화 실패: {str(e)}. RapidOCR이 설치되어 있는지 확인하세요. (pip install rapidocr-onnxruntime)',
                 'success': False,
-                'note': 'Tesseract 다운로드: https://github.com/UB-Mannheim/tesseract/wiki'
             }
             print(json.dumps(result, ensure_ascii=False))
             sys.exit(1)

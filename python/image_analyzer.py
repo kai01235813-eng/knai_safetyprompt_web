@@ -7,7 +7,7 @@ import os
 from typing import Optional, Tuple
 from dataclasses import dataclass
 from PIL import Image
-import pytesseract
+from ocr_engine import RapidOCR
 from prompt_security_validator import KEPCOPromptSecurityValidator, ValidationResult
 
 
@@ -25,16 +25,12 @@ class ImageAnalysisResult:
 class ImageSecurityAnalyzer:
     """이미지 보안 분석기"""
 
-    def __init__(self, tesseract_path: Optional[str] = None):
-        """
-        초기화
-
-        Args:
-            tesseract_path: Tesseract OCR 실행 파일 경로 (Windows의 경우 필요)
-        """
-        # Tesseract 경로 설정 (Windows)
-        if tesseract_path:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    def __init__(self):
+        """초기화"""
+        # OCR 엔진 초기화 (RapidOCR)
+        self.ocr_engine = RapidOCR()
+        if not self.ocr_engine.is_available():
+            raise RuntimeError("RapidOCR를 사용할 수 없습니다. pip install rapidocr-onnxruntime")
 
         # 프롬프트 검증기 초기화
         self.validator = KEPCOPromptSecurityValidator()
@@ -47,67 +43,21 @@ class ImageSecurityAnalyzer:
         ext = os.path.splitext(file_path)[1].lower()
         return ext in self.supported_formats
 
-    def extract_text_from_image(self, image_path: str, lang='kor+eng') -> Tuple[str, float]:
+    def extract_text_from_image(self, image_path: str) -> Tuple[str, float]:
         """
-        이미지에서 텍스트 추출 (OCR)
+        이미지에서 텍스트 추출 (RapidOCR)
 
         Args:
             image_path: 이미지 파일 경로
-            lang: OCR 언어 설정 (기본: 한글+영어)
 
         Returns:
             (추출된 텍스트, 신뢰도)
         """
         try:
-            # 이미지 열기
-            image = Image.open(image_path)
-
-            # 이미지 전처리 (OCR 정확도 향상)
-            image = self._preprocess_image(image)
-
-            # OCR 실행 - 상세 데이터 포함
-            ocr_data = pytesseract.image_to_data(
-                image,
-                lang=lang,
-                output_type=pytesseract.Output.DICT
-            )
-
-            # 텍스트 및 신뢰도 추출
-            text_parts = []
-            confidences = []
-
-            for i, conf in enumerate(ocr_data['conf']):
-                if conf > 0:  # 유효한 인식 결과만
-                    text = ocr_data['text'][i].strip()
-                    if text:
-                        text_parts.append(text)
-                        confidences.append(conf)
-
-            # 전체 텍스트 조합
-            extracted_text = ' '.join(text_parts)
-
-            # 평균 신뢰도 계산
-            avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-
-            return extracted_text, avg_confidence
-
+            text, confidence, _, _ = self.ocr_engine.extract_text(image_path)
+            return text, confidence
         except Exception as e:
             raise Exception(f"OCR 실패: {str(e)}")
-
-    def _preprocess_image(self, image: Image.Image) -> Image.Image:
-        """이미지 전처리 (OCR 정확도 향상)"""
-        # RGB 변환
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        # 해상도가 너무 낮으면 확대
-        width, height = image.size
-        if width < 1000 or height < 1000:
-            scale = max(1000 / width, 1000 / height)
-            new_size = (int(width * scale), int(height * scale))
-            image = image.resize(new_size, Image.Resampling.LANCZOS)
-
-        return image
 
     def analyze_image(self, image_path: str) -> ImageAnalysisResult:
         """
@@ -150,11 +100,7 @@ class ImageSecurityAnalyzer:
 
 def main():
     """테스트 실행"""
-    # Tesseract 경로 설정 (Windows 환경)
-    # 다운로드: https://github.com/UB-Mannheim/tesseract/wiki
-    tesseract_path = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-    analyzer = ImageSecurityAnalyzer(tesseract_path)
+    analyzer = ImageSecurityAnalyzer()
 
     print("=" * 80)
     print("이미지 보안 분석 테스트")

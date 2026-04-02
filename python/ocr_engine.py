@@ -2,15 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 OCR 엔진 추상화 레이어
-Tesseract, PaddleOCR(RapidOCR) 등 OCR 엔진을 쉽게 교체할 수 있도록 인터페이스 제공
+RapidOCR(PaddleOCR) 기반 OCR 인터페이스 제공
 
 사용법:
-    # Tesseract 사용
-    ocr = TesseractOCR(tesseract_path)
-    text, confidence, size, file_size = ocr.extract_text("image.png")
-
-    # 나중에 PaddleOCR로 교체
-    ocr = PaddleOCR()
+    ocr = RapidOCR()
     text, confidence, size, file_size = ocr.extract_text("image.png")
 """
 
@@ -25,8 +20,7 @@ class OCREngine(ABC):
     OCR 엔진 추상 인터페이스
 
     새로운 OCR 엔진을 추가하려면 이 클래스를 상속받아 구현:
-    - TesseractOCR: 현재 사용 중
-    - RapidOCR: PaddleOCR 기반 (향후 마이그레이션 예정)
+    - RapidOCR: PaddleOCR 기반 (현재 사용 중)
     """
 
     @abstractmethod
@@ -80,82 +74,6 @@ class OCREngine(ABC):
         return image
 
 
-class TesseractOCR(OCREngine):
-    """
-    Tesseract OCR 엔진
-
-    Requirements:
-        - pip install pytesseract pillow
-        - Tesseract OCR 설치: https://github.com/UB-Mannheim/tesseract/wiki
-    """
-
-    def __init__(self, tesseract_path: Optional[str] = None):
-        """
-        Args:
-            tesseract_path: Tesseract 실행 파일 경로 (Windows의 경우)
-        """
-        import pytesseract
-        self._pytesseract = pytesseract
-
-        if tesseract_path:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_path
-
-        # 초기화 시 사용 가능 여부 확인
-        self._available = self._check_availability()
-
-    def _check_availability(self) -> bool:
-        """Tesseract 사용 가능 여부 확인"""
-        try:
-            self._pytesseract.get_tesseract_version()
-            return True
-        except Exception:
-            return False
-
-    @property
-    def name(self) -> str:
-        return "tesseract"
-
-    def is_available(self) -> bool:
-        return self._available
-
-    def extract_text(self, image_path: str) -> Tuple[str, float, Tuple[int, int], int]:
-        if not self._available:
-            raise RuntimeError("Tesseract OCR is not available")
-
-        # 이미지 정보
-        image_size, file_size = self._get_image_info(image_path)
-
-        # 이미지 로드 및 전처리
-        image = Image.open(image_path)
-        image = self._preprocess_image(image)
-
-        # OCR 실행 - 상세 데이터 포함
-        ocr_data = self._pytesseract.image_to_data(
-            image,
-            lang='kor+eng',
-            output_type=self._pytesseract.Output.DICT
-        )
-
-        # 텍스트 및 신뢰도 추출
-        text_parts = []
-        confidences = []
-
-        for i, conf in enumerate(ocr_data['conf']):
-            if conf > 0:  # 유효한 인식 결과만
-                text = ocr_data['text'][i].strip()
-                if text:
-                    text_parts.append(text)
-                    confidences.append(conf)
-
-        # 전체 텍스트 조합
-        extracted_text = ' '.join(text_parts)
-
-        # 평균 신뢰도 계산
-        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-
-        return extracted_text, avg_confidence, image_size, file_size
-
-
 class RapidOCR(OCREngine):
     """
     RapidOCR 엔진 (PaddleOCR 기반)
@@ -164,7 +82,7 @@ class RapidOCR(OCREngine):
         - pip install rapidocr-onnxruntime pillow
 
     장점:
-        - 한국어 인식률이 Tesseract보다 우수
+        - 한국어 인식률 우수
         - GPU 없이도 빠른 속도
         - 메모리 효율적
     """
@@ -226,32 +144,18 @@ class RapidOCR(OCREngine):
         return extracted_text, avg_confidence, image_size, file_size
 
 
-def get_best_ocr_engine(tesseract_path: Optional[str] = None) -> OCREngine:
+def get_best_ocr_engine() -> OCREngine:
     """
-    사용 가능한 최적의 OCR 엔진 반환
-
-    우선순위:
-    1. RapidOCR (PaddleOCR 기반) - 한국어 인식률 우수
-    2. Tesseract - 폭넓은 지원
-
-    Args:
-        tesseract_path: Tesseract 경로 (Windows)
+    사용 가능한 OCR 엔진 반환 (RapidOCR)
 
     Returns:
         OCREngine: 사용 가능한 OCR 엔진
     """
-    # RapidOCR 먼저 시도
     rapid = RapidOCR()
     if rapid.is_available():
         return rapid
 
-    # Tesseract 시도
-    tesseract = TesseractOCR(tesseract_path)
-    if tesseract.is_available():
-        return tesseract
-
     raise RuntimeError(
-        "No OCR engine available. Install one of:\n"
-        "  - RapidOCR: pip install rapidocr-onnxruntime\n"
-        "  - Tesseract: https://github.com/UB-Mannheim/tesseract/wiki"
+        "No OCR engine available. Install:\n"
+        "  pip install rapidocr-onnxruntime"
     )

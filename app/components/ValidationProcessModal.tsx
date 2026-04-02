@@ -135,7 +135,7 @@ export default function ValidationProcessModal({ isOpen, onClose, result }: Vali
                 </pre>
               </div>
               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                ✓ Tesseract OCR 엔진을 사용하여 이미지에서 텍스트 추출 완료
+                ✓ OCR 엔진을 사용하여 이미지에서 텍스트 추출 완료
               </div>
             </section>
           )}

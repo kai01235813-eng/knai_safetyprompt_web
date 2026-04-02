@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 현재 OCR은 서버사이드에서 지원하지 않으므로 안내 메시지 반환
-    // 클라이언트에서 Tesseract.js로 OCR 후 텍스트를 /api/validate로 보내는 방식 권장
+    // 클라이언트에서 OCR 후 텍스트를 /api/validate로 보내는 방식 권장
     return NextResponse.json({
       success: true,
       is_safe: true,

@@ -471,7 +471,7 @@ export default function Home() {
                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '1rem' }}>ℹ️</span>
                   <span>
-                    이미지 OCR은 사내 서버에서 처리됩니다 (외부 전송 없음). 사내망에서 접속해야 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
+                    이미지 OCR은 사내 인터넷망 서버에서 처리됩니다 (외부 전송 없음). 사내 인터넷망에서 접속해야 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
                   </span>
                 </div>
                 {ocrStatus === 'loading' && (
