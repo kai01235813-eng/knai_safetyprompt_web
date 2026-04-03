@@ -111,8 +111,19 @@ export default function Home() {
         let fileToSend: File = imageFile
         if (imageFile.type === 'application/pdf' || imageFile.name.toLowerCase().endsWith('.pdf')) {
           try {
-            const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-            pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+            // PDF.js를 CDN script 태그로 로드 (Next.js 번들링 호환 문제 회피)
+            const pdfjsLib = await new Promise<any>((resolve, reject) => {
+              if ((window as any).pdfjsLib) { resolve((window as any).pdfjsLib); return }
+              const script = document.createElement('script')
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+              script.onload = () => {
+                if ((window as any).pdfjsLib) { resolve((window as any).pdfjsLib) }
+                else { reject(new Error('PDF.js 로드 실패')) }
+              }
+              script.onerror = () => reject(new Error('PDF.js 다운로드 실패'))
+              document.head.appendChild(script)
+            })
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
             const arrayBuffer = await imageFile.arrayBuffer()
             const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise
             const allTexts: string[] = []
