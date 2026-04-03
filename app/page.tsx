@@ -19,7 +19,7 @@ export default function Home() {
   const [result, setResult] = useState<any>(null)
   const [isValidating, setIsValidating] = useState(false)
   const [error, setError] = useState('')
-  const [inputType, setInputType] = useState<'text' | 'image'>('text')
+  const [inputType, setInputType] = useState<'text' | 'file'>('text')
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false)
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false)
   const [isIntroExpanded, setIsIntroExpanded] = useState(false)
@@ -90,7 +90,7 @@ export default function Home() {
 
   const handleValidate = async () => {
     if (!prompt.trim() && !imageFile) {
-      setError('프롬프트를 입력하거나 이미지를 업로드해주세요')
+      setError('프롬프트를 입력하거나 파일을 업로드해주세요')
       return
     }
 
@@ -101,39 +101,92 @@ export default function Home() {
     try {
       let textToValidate = prompt
 
-      // 이미지 모드: 로컬 OCR 서버에서 텍스트 추출 후 검증
-      if (inputType === 'image' && imageFile) {
+      // 파일 모드: OCR로 텍스트 추출 후 검증
+      if (inputType === 'file' && imageFile) {
         setOcrStatus('loading')
         setOcrText('')
         setOcrEngine('')
 
-        const ocrForm = new FormData()
-        ocrForm.append('image', imageFile)
+        // PDF인 경우 브라우저에서 이미지로 변환
+        let fileToSend: File = imageFile
+        if (imageFile.type === 'application/pdf' || imageFile.name.toLowerCase().endsWith('.pdf')) {
+          try {
+            const pdfjsLib = await import('pdfjs-dist')
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+            const arrayBuffer = await imageFile.arrayBuffer()
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+            const allTexts: string[] = []
 
-        let ocrRes: Response
-        try {
-          ocrRes = await fetch('/api/ocr', { method: 'POST', body: ocrForm })
-        } catch {
-          setOcrStatus('error')
-          throw new Error('OCR 서버에 연결할 수 없습니다. 사내 서버에서 실행 중인지 AI혁신팀에 문의해주세요.')
+            // 최대 5페이지까지 처리
+            const maxPages = Math.min(pdf.numPages, 5)
+            for (let i = 1; i <= maxPages; i++) {
+              const page = await pdf.getPage(i)
+              const viewport = page.getViewport({ scale: 2.0 })
+              const canvas = document.createElement('canvas')
+              canvas.width = viewport.width
+              canvas.height = viewport.height
+              const ctx = canvas.getContext('2d')!
+              await page.render({ canvasContext: ctx, viewport, canvas } as any).promise
+
+              // Canvas → Blob → File로 변환하여 OCR 호출
+              const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'))
+              const pageFile = new File([blob], `page_${i}.png`, { type: 'image/png' })
+              const ocrForm = new FormData()
+              ocrForm.append('image', pageFile)
+
+              const ocrRes = await fetch('/api/ocr', { method: 'POST', body: ocrForm })
+              if (ocrRes.ok) {
+                const ocrData = await ocrRes.json()
+                if (ocrData.extracted_text?.trim()) {
+                  allTexts.push(ocrData.extracted_text)
+                  setOcrEngine(ocrData.engine || 'unknown')
+                }
+              }
+            }
+
+            if (allTexts.length === 0) {
+              setOcrStatus('error')
+              throw new Error('PDF에서 텍스트를 추출하지 못했습니다.')
+            }
+
+            textToValidate = allTexts.join('\n\n')
+            setOcrText(textToValidate)
+            setOcrStatus('done')
+          } catch (pdfErr: any) {
+            if (pdfErr.message?.includes('PDF에서 텍스트를')) throw pdfErr
+            setOcrStatus('error')
+            throw new Error('PDF 처리 중 오류가 발생했습니다: ' + (pdfErr.message || ''))
+          }
+        } else {
+          // 이미지 파일 처리 (기존 로직)
+          const ocrForm = new FormData()
+          ocrForm.append('image', imageFile)
+
+          let ocrRes: Response
+          try {
+            ocrRes = await fetch('/api/ocr', { method: 'POST', body: ocrForm })
+          } catch {
+            setOcrStatus('error')
+            throw new Error('OCR 서버에 연결할 수 없습니다. AI혁신팀에 문의해주세요.')
+          }
+
+          if (!ocrRes.ok) {
+            setOcrStatus('error')
+            const errData = await ocrRes.json().catch(() => ({}))
+            throw new Error(errData.error || 'OCR 처리 실패')
+          }
+
+          const ocrData = await ocrRes.json()
+          if (!ocrData.extracted_text || ocrData.extracted_text.trim().length === 0) {
+            setOcrStatus('error')
+            throw new Error('파일에서 텍스트를 추출하지 못했습니다. 다른 파일을 업로드해주세요.')
+          }
+
+          textToValidate = ocrData.extracted_text
+          setOcrText(textToValidate)
+          setOcrEngine(ocrData.engine || 'unknown')
+          setOcrStatus('done')
         }
-
-        if (!ocrRes.ok) {
-          setOcrStatus('error')
-          const errData = await ocrRes.json().catch(() => ({}))
-          throw new Error(errData.error || 'OCR 처리 실패')
-        }
-
-        const ocrData = await ocrRes.json()
-        if (!ocrData.extracted_text || ocrData.extracted_text.trim().length === 0) {
-          setOcrStatus('error')
-          throw new Error('이미지에서 텍스트를 추출하지 못했습니다. 텍스트가 포함된 이미지를 업로드해주세요.')
-        }
-
-        textToValidate = ocrData.extracted_text
-        setOcrText(textToValidate)
-        setOcrEngine(ocrData.engine || 'unknown')
-        setOcrStatus('done')
       }
 
       // 텍스트 보안 검증
@@ -162,7 +215,7 @@ export default function Home() {
       } catch {
         throw new Error('서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.')
       }
-      if (inputType === 'image') {
+      if (inputType === 'file') {
         data.ocr_extracted_text = textToValidate
       }
       setResult(data)
@@ -424,22 +477,22 @@ export default function Home() {
               </button>
               {isLocalNetwork && (
                 <button
-                  onClick={() => setInputType('image')}
+                  onClick={() => setInputType('file')}
                   style={{
                     padding: '0.75rem 2rem',
-                    background: inputType === 'image' ? '#4f46e5' : '#f1f5f9',
-                    color: inputType === 'image' ? 'white' : '#64748b',
+                    background: inputType === 'file' ? '#4f46e5' : '#f1f5f9',
+                    color: inputType === 'file' ? 'white' : '#64748b',
                     border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
                     borderRadius: '0 8px 8px 0',
                   }}
                 >
-                  {'\u{1F5BC}\uFE0F'} 이미지 검증
+                  {'\u{1F4CE}'} 파일 검증
                 </button>
               )}
             </div>
             {!isLocalNetwork && (
               <div style={{ marginBottom: '1rem', padding: '0.6rem 1rem', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '0.8rem', color: '#0369a1', textAlign: 'center' }}>
-                이미지 보안 검증은 사내망에서만 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
+                파일 보안 검증은 사내망에서만 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
               </div>
             )}
 
@@ -459,11 +512,11 @@ export default function Home() {
             ) : (
               <div>
                 <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: '#374151', textAlign: 'center' }}>
-                  이미지 파일을 업로드하세요 (OCR로 텍스트 추출 후 보안 검증)
+                  파일을 업로드하세요 (OCR로 텍스트 추출 후 보안 검증)
                 </label>
                 <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '3rem', textAlign: 'center', background: '#f9fafb' }}>
-                  <input type="file" accept="image/*" onChange={(e) => { setImageFile(e.target.files?.[0] || null); setOcrStatus('idle'); setOcrText(''); setOcrEngine('') }} style={{ marginBottom: '1rem' }} />
-                  <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>PNG, JPG, JPEG 파일을 업로드하세요</p>
+                  <input type="file" accept="image/*,.pdf" onChange={(e) => { setImageFile(e.target.files?.[0] || null); setOcrStatus('idle'); setOcrText(''); setOcrEngine('') }} style={{ marginBottom: '1rem' }} />
+                  <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>이미지(PNG, JPG) 또는 PDF 파일을 업로드하세요</p>
                   <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem' }}>
                     AI OCR(Qwen2-VL) + EasyOCR 이중 처리
                   </p>
@@ -471,12 +524,12 @@ export default function Home() {
                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '1rem' }}>ℹ️</span>
                   <span>
-                    이미지 OCR은 사내 인터넷망 서버에서 처리됩니다 (외부 전송 없음). 사내 인터넷망에서 접속해야 이용 가능합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
+                    파일 OCR은 AI(Qwen2-VL)로 처리됩니다. PDF는 브라우저에서 이미지로 변환 후 텍스트를 추출합니다. 접속 방법은 <strong>경남본부 AI혁신팀</strong>에 문의해주세요.
                   </span>
                 </div>
                 {ocrStatus === 'loading' && (
                   <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', textAlign: 'center', color: '#1e40af', fontSize: '0.9rem' }}>
-                    OCR 텍스트 추출 중... (이미지 크기에 따라 수초 소요)
+                    OCR 텍스트 추출 중... (파일 크기에 따라 수초~수십초 소요)
                   </div>
                 )}
                 {ocrStatus === 'done' && ocrText && (
