@@ -1,5 +1,5 @@
 """
-사내 OCR 서버 - PaddleOCR 기반 (RapidOCR ONNX Runtime)
+사내 OCR 서버 - EasyOCR 기반
 safetyprompt 이미지 검증용 (사내망 전용, 외부 전송 없음)
 """
 
@@ -16,8 +16,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image
-import numpy as np
-from rapidocr_onnxruntime import RapidOCR
+import easyocr
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ocr-server")
@@ -32,14 +31,14 @@ app.add_middleware(
 )
 
 # 서버 시작 시 모델 로드 (최초 1회만, 이후 메모리에 유지)
-logger.info("PaddleOCR(RapidOCR) 모델 로딩 중...")
-ocr_engine = RapidOCR()
-logger.info("PaddleOCR(RapidOCR) 모델 로딩 완료")
+logger.info("EasyOCR 모델 로딩 중... (최초 실행 시 다운로드 필요)")
+reader = easyocr.Reader(["ko", "en"], gpu=False)
+logger.info("EasyOCR 모델 로딩 완료")
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "engine": "paddleocr", "languages": ["ko", "en"]}
+    return {"status": "ok", "engine": "easyocr", "languages": ["ko", "en"]}
 
 
 @app.post("/ocr")
@@ -72,19 +71,21 @@ async def ocr(image: UploadFile = File(...)):
                 Image.LANCZOS,
             )
 
-        # OCR 수행 (PaddleOCR via RapidOCR)
-        img_array = np.array(img)
-        results, _ = ocr_engine(img_array)
+        # OCR 수행
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format="PNG")
+        img_bytes.seek(0)
 
-        # 결과 정리
+        results = reader.readtext(img_bytes.getvalue(), detail=1)
+
+        # 결과 정리 (numpy 타입을 Python 기본 타입으로 변환)
         lines = []
         full_text_parts = []
-        if results:
-            for bbox, text, confidence in results:
-                lines.append(
-                    {"text": text, "confidence": round(float(confidence), 3)}
-                )
-                full_text_parts.append(text)
+        for bbox, text, confidence in results:
+            lines.append(
+                {"text": text, "confidence": round(float(confidence), 3)}
+            )
+            full_text_parts.append(text)
 
         full_text = " ".join(full_text_parts)
 
@@ -94,7 +95,7 @@ async def ocr(image: UploadFile = File(...)):
 
         return {
             "success": True,
-            "engine": "paddleocr",
+            "engine": "easyocr",
             "extracted_text": full_text,
             "lines": lines,
             "total_blocks": len(lines),
