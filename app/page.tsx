@@ -111,10 +111,10 @@ export default function Home() {
         let fileToSend: File = imageFile
         if (imageFile.type === 'application/pdf' || imageFile.name.toLowerCase().endsWith('.pdf')) {
           try {
-            const pdfjsLib = await import('pdfjs-dist')
+            const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
             pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
             const arrayBuffer = await imageFile.arrayBuffer()
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise
             const allTexts: string[] = []
 
             // 최대 5페이지까지 처리
@@ -126,7 +126,7 @@ export default function Home() {
               canvas.width = viewport.width
               canvas.height = viewport.height
               const ctx = canvas.getContext('2d')!
-              await page.render({ canvasContext: ctx, viewport, canvas } as any).promise
+              await (page as any).render({ canvasContext: ctx, viewport }).promise
 
               // Canvas → Blob → File로 변환하여 OCR 호출
               const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'))
