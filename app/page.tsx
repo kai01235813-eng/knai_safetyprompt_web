@@ -465,7 +465,7 @@ export default function Home() {
                   <input type="file" accept="image/*" onChange={(e) => { setImageFile(e.target.files?.[0] || null); setOcrStatus('idle'); setOcrText(''); setOcrEngine('') }} style={{ marginBottom: '1rem' }} />
                   <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>PNG, JPG, JPEG 파일을 업로드하세요</p>
                   <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                    사내 OCR 서버(EasyOCR)로 처리 - 외부 전송 없음
+                    AI OCR(Qwen2-VL) + EasyOCR 이중 처리
                   </p>
                 </div>
                 <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.78rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
